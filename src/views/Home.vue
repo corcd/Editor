@@ -8,8 +8,8 @@
         alt="Vue logo"
         src="../assets/logo.png"
         @dragstart="eleDragStart($event)"
-        @mouseup="eleMoveUp($event)"
-        @mousedown="eleMoveDown($event)"
+        @mouseup="eleMoveUp()"
+        @mousedown="eleMoveDown()"
       >
     </div>
   </div>
@@ -27,8 +27,30 @@ export default {
       width: 0,
       height: 0,
       currentX: 0,
-      currentY: 0
+      currentY: 0,
+      lastTop: 0,
+      lastLeft: 0,
+      data: {}
     };
+  },
+  sockets: {
+    connect() {
+      console.log("socket connected");
+    },
+    customEmit(val) {
+      console.log(
+        'this method was fired by the socket server. eg: io.emit("customEmit", data)'
+      );
+    }
+  },
+  mounted() {
+    this.$socket.emit("online", "demo-1");
+    this.$socket.on("online", name => {
+      if (!name) {
+        return;
+      }
+      alert(name + "上线");
+    });
   },
   beforeDestroy() {},
   methods: {
@@ -80,12 +102,15 @@ export default {
         ele.style.left = 0 + "px";
       }
       //console.log(ele.style.top, ele.style.left);
+      this.lastTop = ele.style.top;
+      this.lastLeft = ele.style.left;
+      this.sendPosition(this.lastTop, this.lastLeft);
     },
-    eleMoveDown(event) {
+    eleMoveDown() {
       let canvas = document.getElementById("canvas");
       canvas.addEventListener("mousemove", this.eleDrag);
     },
-    eleMoveUp(event) {
+    eleMoveUp() {
       let canvas = document.getElementById("canvas");
       canvas.removeEventListener("mousemove", this.eleDrag);
     },
@@ -93,14 +118,20 @@ export default {
       let e = event || window.event;
       // 锁判断，当释放鼠标的时候，鼠标移动不执行操作
       if (this.isDraggable) {
-        this.currentX = event.clientX;
-        this.currentY = event.clientY;
+        this.currentX = e.clientX;
+        this.currentY = e.clientY;
         this.eleMove(800, 600);
       }
     },
     eleDragStart(event) {
       console.log("dragstart");
       event.preventDefault();
+    },
+    sendPosition(top, left) {
+      this.$socket.emit("sendMsg", {
+        Top: top,
+        Left: left
+      });
     }
   }
 };
