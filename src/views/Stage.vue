@@ -1,7 +1,19 @@
 <template>
-  <div class="stage">
-    <div id="canvas" class="showCanvas">
-      <img id="ele_stage" class="showImg" alt="Vue logo" src="../assets/logo.png">
+  <div class="stage simpleCanvas">
+    <div
+      id="canvas"
+      class="showCanvas"
+      v-bind:class="[stageResolution == '480P' ? 'simpleCanvas':'',stageResolution == '720P' ? 'normalCanvas':'',stageResolution == '1080P' ? 'extendCanvas':'']"
+    >
+      <img
+        id="ele_stage"
+        class="showImg"
+        alt="Vue logo"
+        v-for="element in elements"
+        :key="element.id"
+        :src="element.imgSrc"
+        :style="{top:element.top+'px',left:element.left+'px',width:element.width+'px',height:element.height+'px'}"
+      >
     </div>
   </div>
 </template>
@@ -12,8 +24,8 @@ export default {
   components: {},
   data() {
     return {
-      currentTop: "",
-      currentLeft: ""
+      stageResolution: "480P",
+      elements: []
     };
   },
   sockets: {
@@ -28,20 +40,20 @@ export default {
   },
   mounted() {
     this.$socket.emit("online", "demo-2");
-    this.$socket.on("online", name => {
-      if (!name) {
-        return;
-      }
-      alert(name + "上线");
-    });
 
     this.$socket.on("receiveMsg", data => {
-      //console.log(data);
-      this.currentTop = data.Top;
-      this.currentLeft = data.Left;
-      this.$nextTick(() => {
-        this.setPosition();
-      });
+      console.log(data);
+      let coefficient = data.Mag;
+      this.stageResolution = data.Resolution;
+      // if (data.Resolution == "480P") coefficient = 1;
+      // else if (data.Resolution == "720P") coefficient = 1.5;
+      // else if (data.Resolution == "1080P") coefficient = 1.5 * 1.5;
+      // else coefficient = 1;
+
+      this.elements = data.Objs;
+      // this.$nextTick(() => {
+      //   this.elements = data.Objs;
+      // });
     });
   },
   beforeDestroy() {},
@@ -49,8 +61,8 @@ export default {
     setPosition() {
       let ele = document.getElementById("ele_stage");
 
-      ele.style.top = this.currentTop;
-      ele.style.left = this.currentLeft;
+      ele.style.top = this.currentTop + "px";
+      ele.style.left = this.currentLeft + "px";
 
       console.log(ele.style.top, ele.style.left);
     }
@@ -59,24 +71,34 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.stage {
-  width: 100%;
-  height: 100%;
+.simpleCanvas {
+  width: 853px;
+  height: 480px;
+}
 
+.normalCanvas {
+  width: 1280px;
+  height: 720px;
+}
+
+.extendCanvas {
+  width: 1920px;
+  height: 1080px;
+}
+
+.stage {
   .showCanvas {
-    width: 800px;
-    height: 600px;
-    margin: auto;
+    margin: 0;
     padding: 0;
-    border: 2px black solid;
+    border: 1px grey solid;
     position: relative;
+    overflow: hidden;
+    z-index: 0;
 
     img {
       margin: 0;
       padding: 0;
       position: absolute;
-      top: 0;
-      left: 0;
     }
   }
 }
