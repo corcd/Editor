@@ -1,19 +1,19 @@
 <template>
   <div
     class="wrap"
-    :style="{top:element.top+'px',left:element.left+'px'}"
+    :style="{'top':element.top+'px','left':element.left+'px','z-index':element.index}"
     @click.stop="showEditor"
     @mousedown="mousedown"
     @mouseup="mouseup"
   >
     <img
-      v-if="fileType==='pic'"
+      v-if="element.type==='img'"
       @dragstart="dragstart"
       :src="element.imgSrc"
-      :style="{width:element.width+'px',height:element.height+'px'}"
+      :style="{'width':element.width+'px','height':element.height+'px','opacity':(element.alpha/100.0)}"
     >
-    <video v-if="fileType==='video'" @dragstart="dragstart" :src="imgSrc"/>
-    <Operate v-show="showOperate" :element="element"/>
+    <!-- <video v-if="fileType==='video'" @dragstart="dragstart" :src="imgSrc"/> -->
+    <Operate v-show="(element.id == elementSelected.id)" :element="element"/>
   </div>
 </template>
 
@@ -26,17 +26,9 @@ export default {
       type: Object,
       require: true
     },
-    showOperate: {
-      type: Boolean,
-      default: false
-    },
-    fileType: {
-      type: String,
-      default: "pic"
-    },
-    imgSrc: {
-      type: String,
-      default: "../assets/logo.png"
+    elementSelected: {
+      type: Object,
+      default: null
     }
   },
   data() {
@@ -56,14 +48,24 @@ export default {
   methods: {
     showEditor() {
       let ele = this.element;
-      ele.edit = true;
+      //ele.edit = true;
       this.$emit("getElementSelected", ele);
       let click = () => {
-        ele.edit = false;
+        //ele.edit = false;
         this.$emit("clearElementSelected");
-        document.removeEventListener("click", click);
+        document
+          .querySelector(".inside-container")
+          .removeEventListener("click", click);
+        document
+          .querySelector(".dragCanvas")
+          .removeEventListener("click", click);
       };
-      document.addEventListener("click", click);
+      document
+        .querySelector(".inside-container")
+        .addEventListener("click", click);
+      document
+        .querySelector(".dragCanvas")
+        .addEventListener("click", click);
     },
     // 处理元素拖动
     move() {
@@ -80,6 +82,10 @@ export default {
       };
     },
     mousedown(e) {
+      let ele = this.element;
+      //ele.edit = true;
+      this.$emit("getElementSelected", ele);
+
       this.flag = true;
       this.currentX = e.clientX;
       this.currentY = e.clientY;

@@ -1,5 +1,12 @@
 <template>
   <div class="statusbar">
+    <div class="btn-do-group">
+      <h1>Editor</h1>
+      <ButtonGroup shape="circle">
+        <Button icon="ios-arrow-back" disabled></Button>
+        <Button icon="ios-arrow-forward" disabled></Button>
+      </ButtonGroup>
+    </div>
     <div class="btn-group">
       <Upload
         :on-success="_upload"
@@ -12,7 +19,7 @@
       >
         <Button icon="ios-cloud-upload-outline">Upload files</Button>
       </Upload>
-      <Button class="btn-profile" @click="isProfileShow = true" type="primary">View Profile</Button>
+      <Button class="btn-preview" @click="preview" type="primary">Proview</Button>
     </div>
     <!-- <Drawer :closable="false" width="640" v-model="isProfileShow">
       <p :style="pStyle">User Profile</p>
@@ -67,7 +74,7 @@
 </template>
 
 <script>
-let Base64 = require('js-base64').Base64;
+let Base64 = require("js-base64").Base64;
 export default {
   name: "StatusBar",
   data() {
@@ -111,6 +118,9 @@ export default {
         //   });
       };
       return false; // 阻止Upload的默认上传
+    },
+    preview() {
+      this.$emit("toPreview");
     }
   }
 };
@@ -123,6 +133,19 @@ export default {
   background: #515a6e;
   display: flex;
   align-items: center;
+
+  .btn-do-group {
+    position: absolute;
+    left: 20px;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+
+    h1 {
+      color: #fff;
+      margin-right: 20px;
+    }
+  }
 
   .btn-group {
     position: absolute;

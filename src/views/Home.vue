@@ -1,24 +1,36 @@
 <template>
   <div class="home">
     <div class="header">
-      <StatusBar></StatusBar>
+      <StatusBar @toPreview="toPreview"></StatusBar>
     </div>
     <div class="container">
-      <SideBar :element="eleSelected" @changeResolution="changeResolution"></SideBar>
+      <SideBar
+        :elementSelected="eleSelected"
+        :exportable="isExportable"
+        @changeResolution="changeResolution"
+        @changeSocketExport="changeSocketExport"
+      ></SideBar>
       <div class="inside-container">
         <div id="canvas" class="dragCanvas">
           <ImgElement
             v-for="element in elements"
             :key="element.id"
-            :fileType="element.type"
             :element="element"
-            :imgSrc="element.imgSrc"
-            :showOperate="element.edit"
+            :elementSelected="eleSelected"
             @getElementSelected="getElementSelected"
             @clearElementSelected="clearElementSelected"
           ></ImgElement>
         </div>
       </div>
+      <LayBar
+        :elements="elements"
+        :elementSelected="eleSelected"
+        @getElementSelected="getElementSelected"
+        @clearElementSelected="clearElementSelected"
+      ></LayBar>
+    </div>
+    <div class="footer">
+      <StatisticsBar :elementSelected="eleSelected"></StatisticsBar>
     </div>
   </div>
 </template>
@@ -31,15 +43,7 @@ export default {
   components: {},
   data() {
     return {
-      isDraggable: true,
-      left: 0,
-      top: 0,
-      width: 0,
-      height: 0,
-      currentX: 0,
-      currentY: 0,
-      lastTop: 0,
-      lastLeft: 0,
+      isExportable: true,
       resolution: "480P",
       mag: 1,
       data: {},
@@ -50,11 +54,24 @@ export default {
           height: 200,
           top: 0,
           left: 0,
-          type: "pic",
+          type: "img",
           imgSrc:
             "http://dingyue.nosdn.127.net/rdVGgleN1ShQeYpNeWL7HkScsZZhbwdaPzoWUaGzD0=PM1529677325458.jpg",
-          alpha: 0,
+          alpha: 100,
           index: 1,
+          edit: false
+        },
+        {
+          id: 2,
+          width: 100,
+          height: 100,
+          top: 330,
+          left: 330,
+          type: "img",
+          imgSrc:
+            "http://dingyue.nosdn.127.net/rdVGgleN1ShQeYpNeWL7HkScsZZhbwdaPzoWUaGzD0=PM1529677325458.jpg",
+          alpha: 100,
+          index: 2,
           edit: false
         }
       ],
@@ -78,29 +95,43 @@ export default {
     this.$watch("elements", this.sendPosition, { deep: true });
   },
   beforeDestroy() {},
-  computed: {
-    elementPosition() {
-      return ele => {
-        return {
-          zIndex: ele["zindex"],
-          top: ele["top"] + "px",
-          left: ele["left"] + "px"
-        };
-      };
-    }
-  },
+  computed: {},
   methods: {
     getElementSelected(ele) {
       // 跟随变化
       this.eleSelected = ele;
     },
     clearElementSelected() {
-      this.eleSelected = null;
+      this.eleSelected = {
+        id: 0,
+        width: 0,
+        height: 0,
+        top: 0,
+        left: 0,
+        type: null,
+        imgSrc: "N/A",
+        alpha: 100,
+        index: 0,
+        edit: false
+      };
     },
     changeResolution(reso, mag) {
       this.resolution = reso;
       this.mag = mag;
       this.sendPosition();
+    },
+    changeSocketExport(boolean) {
+      this.isExportable = boolean;
+    },
+    toPreview() {
+      this.$router.push({
+        path: "/preview",
+        query: {
+          data: this.elements,
+          Resolution: this.resolution,
+          Mag: this.mag
+        }
+      });
     },
     // eleMove(cWidth, cHeight) {
     //   //console.log(cWidth, cHeight);
@@ -179,11 +210,13 @@ export default {
     //   event.preventDefault();
     // },
     sendPosition() {
-      this.$socket.emit("sendMsg", {
-        Resolution: this.resolution,
-        Mag: this.mag,
-        Objs: this.elements
-      });
+      if (this.isExportable) {
+        this.$socket.emit("sendMsg", {
+          Resolution: this.resolution,
+          Mag: this.mag,
+          Objs: this.elements
+        });
+      }
     }
   }
 };
@@ -212,6 +245,7 @@ export default {
     .inside-container {
       width: 100%;
       height: 100%;
+      min-height: 600px;
       display: flex;
       justify-content: center;
       align-items: center;

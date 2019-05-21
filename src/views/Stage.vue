@@ -1,5 +1,5 @@
 <template>
-  <div class="stage simpleCanvas">
+  <div class="stage">
     <div
       id="canvas"
       class="showCanvas"
@@ -8,11 +8,12 @@
       <img
         id="ele_stage"
         class="showImg"
-        alt="Vue logo"
+        alt="img"
+        draggable="false"
         v-for="element in elements"
         :key="element.id"
         :src="element.imgSrc"
-        :style="{top:element.top+'px',left:element.left+'px',width:element.width+'px',height:element.height+'px'}"
+        :style="{'top':element.top*coefficient+'px','left':element.left*coefficient+'px','width':element.width+'px','height':element.height+'px','opacity':(element.alpha/100.0),'z-index':element.index}"
       >
     </div>
   </div>
@@ -25,6 +26,7 @@ export default {
   data() {
     return {
       stageResolution: "480P",
+      coefficient: 1,
       elements: []
     };
   },
@@ -43,7 +45,7 @@ export default {
 
     this.$socket.on("receiveMsg", data => {
       console.log(data);
-      let coefficient = data.Mag;
+      this.coefficient = data.Mag;
       this.stageResolution = data.Resolution;
       // if (data.Resolution == "480P") coefficient = 1;
       // else if (data.Resolution == "720P") coefficient = 1.5;
@@ -58,14 +60,14 @@ export default {
   },
   beforeDestroy() {},
   methods: {
-    setPosition() {
-      let ele = document.getElementById("ele_stage");
+    // setPosition() {
+    //   let ele = document.getElementById("ele_stage");
 
-      ele.style.top = this.currentTop + "px";
-      ele.style.left = this.currentLeft + "px";
+    //   ele.style.top = this.currentTop + "px";
+    //   ele.style.left = this.currentLeft + "px";
 
-      console.log(ele.style.top, ele.style.left);
-    }
+    //   console.log(ele.style.top, ele.style.left);
+    // }
   }
 };
 </script>

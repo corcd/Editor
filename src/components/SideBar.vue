@@ -1,6 +1,6 @@
 <template>
   <div class="sidebar">
-    <Form :model="formItem" :label-width="50">
+    <Form :label-width="50">
       <Divider>Profile</Divider>
       <FormItem label="Source:">
         <Input v-model="ele.imgSrc" placeholder="N/A" readonly></Input>
@@ -31,14 +31,14 @@
       </FormItem>
       <Divider>Export</Divider>
       <FormItem label="Display:">
-        <Select v-model="formItem.select">
+        <Select v-model="selectData">
           <Option value="480P">480P (853*480)</Option>
           <Option value="720P">720P (1280*720)</Option>
           <Option value="1080P">1080P (1920*1080)</Option>
         </Select>
       </FormItem>
       <FormItem label="Export:">
-        <i-switch v-model="formItem.switch" size="large">
+        <i-switch v-model="exportData" size="large">
           <span slot="on">On</span>
           <span slot="off">Off</span>
         </i-switch>
@@ -52,35 +52,38 @@ import { type } from "os";
 export default {
   name: "SideBar",
   props: {
-    element: {
+    elementSelected: {
       type: Object,
       default: null
+    },
+    exportable: {
+      type: Boolean,
+      default: false
     }
   },
   data() {
     return {
-      formItem: {
-        select: "480P",
-        switch: true,
-        alpha: 0
-      },
+      selectData: "480P",
+      exportData: this.exportable,
       ele: {},
-      videoMag: 1
+      videoMag: 1,
+      realTop: 0.0,
+      realLeft: 0.0
     };
   },
   methods: {},
   watch: {
-    "formItem.select": {
+    selectData: {
       handler(newValue, oldValue) {
         if (newValue == "480P") {
           this.$Message.success("480P");
           this.videoMag = 1;
         } else if (newValue == "720P") {
           this.$Message.success("720P");
-          this.videoMag = 16.0 / 9.0;
+          this.videoMag = 1.5;
         } else if (newValue == "1080P") {
           this.$Message.success("1080P");
-          this.videoMag = ((16.0 / 9.0) * 16.0) / 9.0;
+          this.videoMag = 1.5 * 1.5;
         } else {
           this.$Message.error("Error");
           this.videoMag = 1;
@@ -89,23 +92,28 @@ export default {
         let mag = this.videoMag;
         this.$emit("changeResolution", reso, mag);
       },
-      deep: true,
       immediate: true
     },
-    "formItem.switch": {
+    exportData: {
       handler(newValue, oldValue) {
         if (newValue == true) {
-          this.$Message.success("Socket On");
+          this.$emit("changeSocketExport", true);
+          this.$Message.success({
+            content: "Socket On",
+            top: 10,
+            duration: 10
+          });
         } else if (newValue == false) {
-          this.$Message.success("Socket Off");
+          this.$emit("changeSocketExport", false);
+          this.$Message.warning("Socket Off");
         } else {
+          this.$emit("changeSocketExport", false);
           this.$Message.error("Error");
         }
       },
-      deep: true,
       immediate: true
     },
-    element: {
+    elementSelected: {
       handler(newValue, oldValue) {
         if (newValue) {
           this.ele = newValue;
@@ -118,7 +126,8 @@ export default {
             left: 0,
             type: null,
             imgSrc: "N/A",
-            index: 1,
+            alpha: 0,
+            index: 0,
             edit: false
           };
         }
@@ -134,11 +143,13 @@ export default {
 .sidebar {
   width: 350px;
   height: 100%;
+  min-height: 600px;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   align-items: center;
   border-right: 1px solid #d7dde4;
+  //box-shadow: 0px 0px 6px #c2c2c2;
   background: #fff;
 
   form {

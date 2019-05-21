@@ -1,14 +1,20 @@
 import StatusBar from "./StatusBar";
+import StatisticsBar from "./StatisticsBar";
 import SideBar from "./SideBar";
+import LayBar from "./LayBar";
 import Operate from "./Operate";
 import ImgElement from "./Element/ImgElement";
+import LayerPicker from "./LayerPicker";
 import Editor from "./Editor";
 
 const components = {
   StatusBar,
+  StatisticsBar,
   SideBar,
+  LayBar,
   Operate,
   ImgElement,
+  LayerPicker,
   Editor
 };
 

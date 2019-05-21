@@ -11,6 +11,7 @@ import VueAxios from "vue-axios";
 import Vcomp from "./components/index";
 
 import "iview/dist/styles/iview.css";
+import './assets/css/global.scss'
 
 // Vuex
 Vue.use(Vuex);
