@@ -9,7 +9,6 @@ let bodyParser = require("body-parser");
 let http = require("http").Server(app);
 let io = require("socket.io")(http);
 
-
 // 跨域
 let allowCors = function(req, res, next) {
   res.header("Access-Control-Allow-Origin", req.headers.origin);
@@ -21,44 +20,36 @@ let allowCors = function(req, res, next) {
 app.use(allowCors); //使用跨域中间件
 app.use(logger("dev"));
 
+//const upload = multer({ dest: __dirname + "/tmp/img" }); //设置上传的目录文件夹
+
 app.use(express.static(path.join(__dirname, "public")));
 app.use(
   bodyParser.urlencoded({
     extended: false
   })
 );
+app.use(bodyParser.json());
 
 app.get("/", (req, res) => {
   res.sendFile(__dirname + "../public/index.html");
 });
 
-// app.post("/upload", (req, res) => {
-//   console.log(req.files[0]); // 上传的文件信息
+// 引入七牛云配置
+const qnconfig = require("./config.js");
+// 处理请求
+app.get("/token", (req, res, next) => {
+  // console.log(qnconfig.uploadToken)
+  res.status(200).send(qnconfig.uploadToken);
+});
 
-//   let des_file = __dirname + "/" + req.files[0].originalname;
-//   fs.readFile(req.files[0].path, (err, data) => {
-//     fs.writeFile(des_file, data, err => {
-//       if (err) {
-//         console.log(err);
-//         let response = {
-//           code: 0,
-//           message: "File uploaded failed",
-//           filename: ""
-//         };
-//         console.log(response);
-//         res.end(JSON.stringify(response));
-//       } else {
-//         let response = {
-//           code: 1,
-//           message: "File uploaded successfully",
-//           filename: req.files[0].originalname
-//         };
-//         console.log(response);
-//         res.end(JSON.stringify(response));
-//       }
-//     });
-//   });
-// });
+app.post("/data", (req, res, next) => {
+  let str_json = JSON.stringify(req.body);
+  console.log(str_json);
+  fs.writeFile("data.json", str_json, "utf8", () => {
+    // 保存完成后的回调函数
+    console.log("保存完成");
+  });
+});
 
 //客户端连接
 io.on("connection", socket => {

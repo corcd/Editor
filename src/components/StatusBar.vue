@@ -9,8 +9,8 @@
     </div>
     <div class="btn-group">
       <Upload
-        :on-success="_upload"
-        action
+        :action="domain"
+        :http-request="upqiniu"
         :format="['jpg','jpeg','png']"
         :max-size="2048"
         :on-format-error="handleFormatError"
@@ -21,71 +21,60 @@
       </Upload>
       <Button class="btn-preview" @click="preview" type="primary">Proview</Button>
     </div>
-    <!-- <Drawer :closable="false" width="640" v-model="isProfileShow">
-      <p :style="pStyle">User Profile</p>
-      <p :style="pStyle">Personal</p>
-      <div class="demo-drawer-profile">
-        <Row>
-          <Col span="12">Full Name: Aresn</Col>
-          <Col span="12">Account: aresn@aresn.com</Col>
-        </Row>
-        <Row>
-          <Col span="12">City: BeiJing</Col>
-          <Col span="12">Country: China</Col>
-        </Row>
-        <Row>
-          <Col span="12">Birthday: May 14, 1991</Col>
-          <Col span="12">
-            Website:
-            <a href="https://dev.iviewui.com" target="_blank">https://dev.iviewui.com</a>
-          </Col>
-        </Row>Message: Hello, Developer
-      </div>
-      <Divider/>
-      <p :style="pStyle">Company</p>
-      <div class="demo-drawer-profile">
-        <Row>
-          <Col span="12">Position: Programmer</Col>
-          <Col span="12">Responsibilities:Coding</Col>
-        </Row>
-        <Row>
-          <Col span="12">Department: Map visualization</Col>
-        </Row>Skills:C / C + +, data structures, software engineering, operating systems, computer networks, databases, compiler theory, computer architecture, Microcomputer Principle and Interface Technology, Computer English, Java, ASP, etc.
-      </div>
-      <Divider/>
-      <p :style="pStyle">Contacts</p>
-      <div class="demo-drawer-profile">
-        <Row>
-          <Col span="12">Email: admin@aresn.com</Col>
-          <Col span="12">Phone Number: +86 18888888888</Col>
-        </Row>
-        <Row>
-          <Col span="12">
-            GitHub:
-            <a
-              href="https://github.com/iview/iview"
-              target="_blank"
-            >https://github.com/iview/iview</a>
-          </Col>
-        </Row>
-      </div>
-    </Drawer>-->
   </div>
 </template>
 
 <script>
-let Base64 = require("js-base64").Base64;
 export default {
   name: "StatusBar",
   data() {
     return {
-      isPreviewOn: false,
-      isProfileShow: false
+      imageUrl: "",
+      token: {},
+      // 七牛云的上传地址，根据自己所在地区选择，我这里是华南区
+      domain: "https://upload.qiniup.com",
+      // 这是七牛云空间的外链默认域名
+      qiniuaddr: "prvz33yaw.bkt.clouddn.com"
     };
   },
   methods: {
-    _upload(response, file) {
-      console.log(response, file);
+    // 上传文件到七牛云
+    upqiniu(file) {
+      console.log(file);
+      const config = {
+        headers: { "Content-Type": "multipart/form-data" }
+      };
+      let filetype = "";
+      if (file.type === "image/png") {
+        filetype = "png";
+      } else {
+        filetype = "jpg";
+      }
+      // 重命名要上传的文件
+      const Name = file.name;
+      const suffix = Name.substr(Name.indexOf(".")); // 文件后缀
+      const keyname = "images-oss_" + Date.parse(new Date()) + suffix; // 组成新文件名
+
+      // 从后端获取上传凭证token
+      this.$axios.get("http://139.196.92.199:3006/token").then(res => {
+        console.log(res);
+        const formdata = new FormData();
+        formdata.append("file", file);
+        formdata.append("token", res.data);
+        formdata.append("key", keyname);
+        // 获取到凭证之后再将文件上传到七牛云空间
+        this.$axios
+          .post(this.domain, formdata, config)
+          .then(res => {
+            this.imageUrl = "http://" + this.qiniuaddr + "/" + res.data.key;
+            this.$Message.success("Upload Success");
+            console.log(res);
+            this.$emit("elementAdd",this.imageUrl,"img");
+          })
+          .catch(err => {
+            this.$Message.error("Upload Error");
+          });
+      });
     },
     handleFormatError(file) {
       this.$Notice.warning({
@@ -103,20 +92,15 @@ export default {
       });
     },
     handleBeforeUpload(file) {
-      let reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = e => {
-        let _file = e.target.result;
-
-        console.log(Base64.encode(_file));
-        // this.$api
-        //   .post({
-        //     data: Base64.encode(_file)
-        //   })
-        //   .then(res => {
-        //     // 上传成功
-        //   });
-      };
+      const isJPG = file.type === "image/jpeg" || file.type === "image/png";
+      const isLt2M = file.size / 1024 / 1024 < 2;
+      if (!isJPG) {
+        this.$message.error("Type Error");
+      }
+      if (!isLt2M) {
+        this.$message.error("Volume Error");
+      }
+      this.upqiniu(file);
       return false; // 阻止Upload的默认上传
     },
     preview() {

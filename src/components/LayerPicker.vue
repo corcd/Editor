@@ -10,7 +10,7 @@
     </div>
     <div class="layerpicker-info">
       <h4>Layer {{element.id}}</h4>
-      <span>Index: {{element.index}}</span>
+      <span>Z-Index: {{element.index}}</span>
     </div>
   </div>
 </template>
@@ -22,7 +22,6 @@ export default {
     element: Object,
     elementSelected: Object
   },
-  data() {},
   methods: {
     layerSelect() {
       if (this.element.id == this.elementSelected.id) {
@@ -57,8 +56,8 @@ export default {
     align-items: center;
 
     img {
-      width: 45px;
-      height: 45px;
+      width: 50px;
+      margin-left: 5px;
     }
   }
 

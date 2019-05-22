@@ -3,31 +3,31 @@
     <Form :label-width="50">
       <Divider>Profile</Divider>
       <FormItem label="Source:">
-        <Input v-model="ele.imgSrc" placeholder="N/A" readonly></Input>
+        <Input v-model="elementSelected.imgSrc" placeholder="N/A" readonly></Input>
       </FormItem>
       <Divider>Position</Divider>
       <FormItem label="Width:">
-        <Input v-model="ele.width" placeholder="0">
+        <Input v-model="elementSelected.width" placeholder="0">
           <span slot="append">px</span>
         </Input>
       </FormItem>
       <FormItem label="Height:">
-        <Input v-model="ele.height" placeholder="0">
+        <Input v-model="elementSelected.height" placeholder="0">
           <span slot="append">px</span>
         </Input>
       </FormItem>
       <FormItem label="Top:">
-        <Input v-model="ele.top" placeholder="0">
+        <Input v-model="elementSelected.top" placeholder="0">
           <span slot="append">px</span>
         </Input>
       </FormItem>
       <FormItem label="Left:">
-        <Input v-model="ele.left" placeholder="0">
+        <Input v-model="elementSelected.left" placeholder="0">
           <span slot="append">px</span>
         </Input>
       </FormItem>
       <FormItem label="Alpha:">
-        <Slider v-model="ele.alpha" show-input></Slider>
+        <Slider v-model="elementSelected.alpha" show-input></Slider>
       </FormItem>
       <Divider>Export</Divider>
       <FormItem label="Display:">
@@ -65,7 +65,6 @@ export default {
     return {
       selectData: "480P",
       exportData: this.exportable,
-      ele: {},
       videoMag: 1,
       realTop: 0.0,
       realLeft: 0.0
@@ -111,28 +110,6 @@ export default {
           this.$Message.error("Error");
         }
       },
-      immediate: true
-    },
-    elementSelected: {
-      handler(newValue, oldValue) {
-        if (newValue) {
-          this.ele = newValue;
-        } else {
-          this.ele = {
-            id: 0,
-            width: 0,
-            height: 0,
-            top: 0,
-            left: 0,
-            type: null,
-            imgSrc: "N/A",
-            alpha: 0,
-            index: 0,
-            edit: false
-          };
-        }
-      },
-      deep: true,
       immediate: true
     }
   }

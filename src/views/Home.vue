@@ -1,7 +1,7 @@
 <template>
   <div class="home">
     <div class="header">
-      <StatusBar @toPreview="toPreview"></StatusBar>
+      <StatusBar @toPreview="toPreview" @elementAdd="elementAdd"></StatusBar>
     </div>
     <div class="container">
       <SideBar
@@ -47,35 +47,9 @@ export default {
       resolution: "480P",
       mag: 1,
       data: {},
-      elements: [
-        {
-          id: 1,
-          width: 200,
-          height: 200,
-          top: 0,
-          left: 0,
-          type: "img",
-          imgSrc:
-            "http://dingyue.nosdn.127.net/rdVGgleN1ShQeYpNeWL7HkScsZZhbwdaPzoWUaGzD0=PM1529677325458.jpg",
-          alpha: 100,
-          index: 1,
-          edit: false
-        },
-        {
-          id: 2,
-          width: 100,
-          height: 100,
-          top: 330,
-          left: 330,
-          type: "img",
-          imgSrc:
-            "http://dingyue.nosdn.127.net/rdVGgleN1ShQeYpNeWL7HkScsZZhbwdaPzoWUaGzD0=PM1529677325458.jpg",
-          alpha: 100,
-          index: 2,
-          edit: false
-        }
-      ],
+      elements: JSON.parse(JSON.stringify(this.$store.state.elements)),
       eleSelected: {},
+      lastIndex: this.$store.state.lastIndex,
       http: appConst.BACKEND_DOMAIN
     };
   },
@@ -89,14 +63,44 @@ export default {
       );
     }
   },
-  mounted() {
-    this.$socket.emit("online", "demo-1");
-
-    this.$watch("elements", this.sendPosition, { deep: true });
+  created() {
+    //this.elements = this.$store.state.elements;
   },
-  beforeDestroy() {},
+  mounted() {
+    this.$socket.emit("online", "demo-editor");
+
+    this.$watch("elements", this.updateData, { deep: true });
+  },
+  beforeDestroy() {
+    let temp = JSON.parse(JSON.stringify(this.elements));
+    this.$store.dispatch("updateElements", temp);
+    this.$store.commit("indexIncrement", this.lastIndex);
+
+    // 节流
+    this.exportJSON();
+  },
   computed: {},
   methods: {
+    elementAdd(url, type) {
+      let newObj = {
+        id: this.lastIndex,
+        width: 200,
+        height: 200,
+        top: 0,
+        left: 0,
+        type: type,
+        imgSrc: url,
+        alpha: 100,
+        index: 1
+      };
+      this.lastIndex++;
+      this.$store.commit("indexIncrement", this.lastIndex);
+      //console.log(newObj);
+      //this.elements.push(newObj);
+      this.$store.dispatch("addElements", newObj);
+      this.lastIndex = this.$store.state.lastIndex;
+      this.elements = JSON.parse(JSON.stringify(this.$store.state.elements));
+    },
     getElementSelected(ele) {
       // 跟随变化
       this.eleSelected = ele;
@@ -111,14 +115,13 @@ export default {
         type: null,
         imgSrc: "N/A",
         alpha: 100,
-        index: 0,
-        edit: false
+        index: 0
       };
     },
     changeResolution(reso, mag) {
       this.resolution = reso;
       this.mag = mag;
-      this.sendPosition();
+      this.updateData();
     },
     changeSocketExport(boolean) {
       this.isExportable = boolean;
@@ -133,83 +136,8 @@ export default {
         }
       });
     },
-    // eleMove(cWidth, cHeight) {
-    //   //console.log(cWidth, cHeight);
-    //   let ele = document.getElementById("ele");
-    //   //console.log(canvas.offsetTop,canvas.offsetLeft);
-    //   this.width = ele.offsetWidth;
-    //   this.height = ele.offsetHeight;
-    //   this.top = this.currentY - canvas.offsetTop - this.height / 2;
-    //   this.left = this.currentX - canvas.offsetLeft - this.width / 2;
-
-    //   this.lastTop = this.top;
-    //   this.lastLeft = this.left;
-
-    //   // // 在容器中
-    //   // if (this.top >= 0 && this.left >= 0) {
-    //   //   if (this.top >= cHeight - this.height) {
-    //   //     this.lastTop = cHeight - this.height;
-    //   //   } else {
-    //   //     this.lastTop = this.top;
-    //   //   }
-
-    //   //   if (this.left >= cWidth - this.width) {
-    //   //     this.lastLeft = cWidth - this.width;
-    //   //   } else {
-    //   //     this.lastLeft = this.left;
-    //   //   }
-    //   // }
-    //   // // 触及容器顶部 & 左边框
-    //   // else if (this.top < 0 && this.left >= 0) {
-    //   //   this.lastTop = 0;
-    //   //   if (this.left >= cWidth - this.width) {
-    //   //     this.lastLeft = cWidth - this.width;
-    //   //   } else {
-    //   //     this.lastLeft = this.left;
-    //   //   }
-    //   // }
-    //   // // 触及容器右边框 & 底部
-    //   // else if (this.top >= 0 && this.left < 0) {
-    //   //   this.lastLeft = 0;
-    //   //   if (this.top >= cHeight - this.height) {
-    //   //     this.lastTop = cHeight - this.height;
-    //   //   } else {
-    //   //     this.lastTop = this.top;
-    //   //   }
-    //   // }
-    //   // // 容器原点
-    //   // else {
-    //   //   this.lastTop = 0;
-    //   //   this.lastLeft = 0;
-    //   // }
-
-    //   ele.style.top = this.lastTop + "px";
-    //   ele.style.left = this.lastLeft + "px";
-
-    //   this.sendPosition(this.lastTop, this.lastLeft, this.resolution, this.mag);
-    // },
-    // eleMoveDown() {
-    //   let canvas = document.getElementById("canvas");
-    //   canvas.addEventListener("mousemove", this.eleDrag);
-    // },
-    // eleMoveUp() {
-    //   let canvas = document.getElementById("canvas");
-    //   canvas.removeEventListener("mousemove", this.eleDrag);
-    // },
-    // eleDrag(event) {
-    //   let e = event || window.event;
-    //   // 锁判断，当释放鼠标的时候，鼠标移动不执行操作
-    //   if (this.isDraggable) {
-    //     this.currentX = e.clientX;
-    //     this.currentY = e.clientY;
-    //     this.eleMove(853, 480);
-    //   }
-    // },
-    // eleDragStart(event) {
-    //   console.log("dragstart");
-    //   event.preventDefault();
-    // },
-    sendPosition() {
+    updateData() {
+      // 输出至 Stage
       if (this.isExportable) {
         this.$socket.emit("sendMsg", {
           Resolution: this.resolution,
@@ -217,6 +145,19 @@ export default {
           Objs: this.elements
         });
       }
+    },
+    exportJSON() {
+      this.$axios
+        .post(
+          "http://139.196.92.199:3006/data",
+          JSON.parse(JSON.stringify(this.$store.state))
+        )
+        .then(response => {
+          console.log(response);
+        })
+        .catch(err => {
+          this.$Message.error("Save Error");
+        });
     }
   }
 };

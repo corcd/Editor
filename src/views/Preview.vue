@@ -2,7 +2,10 @@
   <div class="preview">
     <div class="header">
       <div class="statusbar">
-        <Button class="btn-backward" @click="backward" type="primary">Back</Button>
+        <div class="group">
+          <h1>Preview</h1>
+          <Button class="btn-backward" @click="backward">Back</Button>
+        </div>
       </div>
     </div>
     <div class="container">
@@ -83,9 +86,17 @@ export default {
       display: flex;
       align-items: center;
 
-      .btn-backward {
+      .group {
         position: absolute;
         left: 20px;
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+
+        h1 {
+          color: #fff;
+          margin-right: 20px;
+        }
       }
     }
   }

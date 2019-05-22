@@ -41,7 +41,7 @@ export default {
     }
   },
   mounted() {
-    this.$socket.emit("online", "demo-2");
+    this.$socket.emit("online", "demo-stage");
 
     this.$socket.on("receiveMsg", data => {
       console.log(data);

@@ -1,0 +1,26 @@
+{
+    "elements": [{
+            "id": 1,
+            "width": 200,
+            "height": 200,
+            "top": 0,
+            "left": 0,
+            "type": "img",
+            "imgSrc": "http://dingyue.nosdn.127.net/rdVGgleN1ShQeYpNeWL7HkScsZZhbwdaPzoWUaGzD0=PM1529677325458.jpg",
+            "alpha": 100,
+            "index": 1
+        },
+        {
+            "id": 2,
+            "width": 578,
+            "height": 270,
+            "top": 330,
+            "left": 330,
+            "type": "img",
+            "imgSrc": "https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1558499953926&di=ee19bce12356b3a669815e9c476fdc8b&imgtype=0&src=http%3A%2F%2Fstatic.open-open.com%2Fnews%2FuploadImg%2F20151213%2F20151213224253_256.png",
+            "alpha": 100,
+            "index": 2
+        }
+    ],
+    "lastIndex": 3
+}
