@@ -29,15 +29,14 @@ td {
 
 html,
 body {
-    width: 100%;
-    min-width: 1200px;
-    min-height: 600px;
     margin: 0;
+    padding: 0;
     border: 0;
     top: 0;
     right: 0;
     left: 0;
     bottom: 0;
+    background-color: transparent;
 }
 
 * {

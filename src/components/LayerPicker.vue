@@ -9,8 +9,16 @@
       <img alt="img" draggable="false" :src="element.imgSrc">
     </div>
     <div class="layerpicker-info">
-      <h4>Layer {{element.id}}</h4>
+      <div class="layerpicker-indicator">
+        <Icon type="ios-browsers" size="14"/>
+        <h3>Layer {{element.id}}</h3>
+      </div>
       <span>Z-Index: {{element.index}}</span>
+    </div>
+    <div class="layerpicker-controller" v-show="element.id == elementSelected.id">
+      <a @click="delElement">
+        <Icon type="md-close" size="15" color="black"/>
+      </a>
     </div>
   </div>
 </template>
@@ -24,11 +32,29 @@ export default {
   },
   methods: {
     layerSelect() {
+      let click = () => {
+        //ele.edit = false;
+        this.$emit("clearElementSelected");
+        document
+          .querySelector(".inside-container")
+          .removeEventListener("click", click);
+        document
+          .querySelector(".dragCanvas")
+          .removeEventListener("click", click);
+      };
+
       if (this.element.id == this.elementSelected.id) {
         this.$emit("clearElementSelected");
       } else {
         this.$emit("getElementSelected", this.element);
+        document
+          .querySelector(".inside-container")
+          .addEventListener("click", click);
+        document.querySelector(".dragCanvas").addEventListener("click", click);
       }
+    },
+    delElement() {
+      this.$emit("delElementSelected", this.element);
     }
   }
 };
@@ -51,12 +77,16 @@ export default {
   cursor: pointer;
 
   .layerpicker-ele {
+    width: 60px;
+    min-width: 60px;
+    height: 100%;
     display: flex;
     justify-content: center;
     align-items: center;
 
     img {
-      width: 50px;
+      max-width: 50px;
+      max-height: 50px;
       margin-left: 5px;
     }
   }
@@ -64,10 +94,37 @@ export default {
   .layerpicker-info {
     width: 100%;
     height: 45px;
+    padding-right: 15px;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
+
+    .layerpicker-indicator {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+
+      h3 {
+        margin-left: 5px;
+      }
+    }
+  }
+
+  .layerpicker-controller {
+    width: 15px;
+    height: 100%;
+    margin-right: 5px;
+    position: absolute;
+    right: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0.6;
+
+    i {
+    }
   }
 }
 </style>

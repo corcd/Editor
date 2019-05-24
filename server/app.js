@@ -30,6 +30,9 @@ app.use(
 );
 app.use(bodyParser.json());
 
+var editors = []; // 编辑器对象数组
+var stages = []; // 舞台对象数组
+
 app.get("/", (req, res) => {
   res.sendFile(__dirname + "../public/index.html");
 });
@@ -48,12 +51,17 @@ app.post("/data", (req, res, next) => {
   fs.writeFile("data.json", str_json, "utf8", () => {
     // 保存完成后的回调函数
     console.log("保存完成");
+    str_json = "";
+    res.send({
+      code: 1
+    });
   });
 });
 
 //客户端连接
 io.on("connection", socket => {
   console.log("客户端连接", socket.id);
+
   //客户端连接失败
   socket.on("connect_failed", () => {
     console.log("connect_failed to Server");
@@ -71,21 +79,68 @@ io.on("connection", socket => {
   socket.on("reconnect", () => {
     console.log("reconnect");
   });
+
   //客户端断开连接
   socket.on("disconnect", () => {
     console.log("客户端断开连接", socket.id);
+    // if (stages.findIndex(item => item.sid === socket.id)) {
+    //   stages.splice(stages.findIndex(item => item.sid === socket.id), 1);
+    // }
+    // if (editors.findIndex(item => item.sid === socket.id)) {
+    //   editors.splice(editors.findIndex(item => item.sid === socket.id), 1);
+    // }
   });
 
   // 上线
-  socket.on("online", name => {
-    console.log("客户端上线", name);
-    socket.broadcast.emit("online", name);
+  socket.on("online", info => {
+    if (info.type == "editor") {
+      console.log("编辑器上线", info.appid);
+      editors.push({
+        appid: info.appid,
+        sid: socket.id
+      });
+    } else if (info.type == "stage") {
+      console.log("舞台上线", info.appid);
+      stages.push({
+        appid: info.appid,
+        sid: socket.id
+      });
+    }
+    socket.join(info.appid);
+    console.log(editors, stages);
+    //socket.broadcast.emit("online", name);
+  });
+
+  app.post("/clear", (req, res, next) => {
+    console.log(req.body);
+    socket.broadcast.to(req.body.appid).emit("clearStage");
+    console.log("舞台数据清除");
+    res.send({
+      code: 1
+    });
+    //next();
+  });
+
+  app.post("/apply", (req, res, next) => {
+    console.log(req.body);
+    socket.broadcast.to(req.body.appid).emit("onceUpdate");
+    console.log("请求编辑器更新舞台数据");
+    res.send({
+      code: 1
+    });
+    //next();
   });
 
   // 坐标
   socket.on("sendMsg", data => {
-    console.log("客户端坐标数据获取", data);
-    socket.broadcast.emit("receiveMsg", data);
+    console.log("编辑器数据获取", data);
+    socket.broadcast.to(data.appid).emit("receiveMsg", data.data);
+  });
+
+  // 预览
+  socket.on("sendMsgPre", data => {
+    console.log("编辑器数据获取", data);
+    socket.broadcast.to(data.appid).emit("receiveMsgPre", data.data);
   });
 });
 

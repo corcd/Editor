@@ -8,6 +8,7 @@ import io from "socket.io-client";
 import iView from "iview";
 import Axios from "axios";
 import Vcomp from "./components/index";
+import utils from "./utils"; //获取url参数
 
 import "iview/dist/styles/iview.css";
 import "./assets/css/global.scss";
@@ -23,6 +24,7 @@ Vue.use(Vcomp);
 
 Vue.config.productionTip = false;
 Vue.prototype.$axios = Axios;
+Vue.prototype.$utils = utils;
 
 router.beforeEach((to, from, next) => {
   iView.LoadingBar.start();
@@ -30,15 +32,15 @@ router.beforeEach((to, from, next) => {
     .then(response => {
       let res = JSON.parse(JSON.stringify(response));
       if (res.status == 200) {
-        console.log(res.data);
-        store.state.elements = [];
-        store.state.elements.push(...res.data.elements);
-        store.state.lastIndex = res.data.lastIndex;
+        //console.log(res.data);
+        store.replaceState(res.data);
+        console.log(store.state);
       }
       next();
     })
     .catch(err => {
       console.log(err.message);
+      next();
     });
 });
 

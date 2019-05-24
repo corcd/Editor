@@ -3,6 +3,8 @@ import Router from "vue-router";
 import Home from "./views/Home.vue";
 import Stage from "./views/Stage.vue";
 import Preview from "./views/Preview.vue";
+import Error from "./views/Error.vue";
+import Mini from "./views/Mini.vue";
 
 Vue.use(Router);
 
@@ -13,17 +15,42 @@ export default new Router({
     {
       path: "/",
       name: "home",
-      component: Home
+      component: Home,
+      meta: {
+        title: "Editor"
+      }
     },
     {
       path: "/stage",
       name: "stage",
-      component: Stage
+      component: Stage,
+      meta: {
+        title: "Stage"
+      }
     },
     {
       path: "/preview",
       name: "preview",
-      component: Preview
+      component: Preview,
+      meta: {
+        title: "Preview"
+      }
+    },
+    {
+      path: "/error",
+      name: "error",
+      component: Error,
+      meta: {
+        title: "Error"
+      }
+    },
+    {
+      path: "/mini",
+      name: "mini",
+      component: Mini,
+      meta: {
+        title: "Mini"
+      }
     }
   ]
 });

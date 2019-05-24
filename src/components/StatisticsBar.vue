@@ -1,7 +1,10 @@
 <template>
   <div class="statisticsbar">
     <span class="time">{{nowTime}}</span>
-    <span class="type">{{elementSelected.type}}</span>
+    <div class="scaleBar">
+      <span>Scale: {{valueScale}}%</span>
+      <Slider class="scaleSlider" :min="1" v-model="valueScale" @on-input="changeScaleValue"></Slider>
+    </div>
   </div>
 </template>
 
@@ -9,12 +12,14 @@
 export default {
   name: "StatisticsBar",
   props: {
+    zoom: Number,
     elementSelected: Object
   },
   data() {
     return {
       nowTime: "",
-      timer: null
+      timer: null,
+      valueScale: 100
     };
   },
   mounted() {
@@ -27,6 +32,10 @@ export default {
     this.timer = null;
   },
   methods: {
+    changeScaleValue() {
+      //console.log(this.valueScale / 100.0);
+      this.$emit("changeScaleValue", (this.valueScale / 100.0));
+    },
     getNowFormatDate() {
       let date = new Date();
       let seperator1 = "-";
@@ -50,6 +59,13 @@ export default {
         date.getSeconds();
       this.nowTime = currentdate;
     }
+  },
+  watch: {
+    zoom: {
+      handler(newValue, oldValue) {
+        if (newValue != oldValue) this.valueScale = this.zoom * 100;
+      }
+    }
   }
 };
 </script>
@@ -57,22 +73,38 @@ export default {
 <style lang="scss" scoped>
 .statisticsbar {
   width: 100%;
-  height: 20px;
+  height: 30px;
   background: #515a6e;
   display: flex;
   align-items: center;
   position: relative;
+  z-index: 9999;
 
   .time {
     position: absolute;
-    left: 20px;
+    left: 10px;
+    font: 14px bold;
     color: #fff;
   }
 
-  .type {
+  .scaleBar {
+    min-width: 200px;
+    display: flex;
+    align-items: center;
     position: absolute;
     right: 20px;
-    color: #fff;
+
+    span {
+      font: 14px bold;
+      color: #fff;
+    }
+
+    .scaleSlider {
+      width: 100px;
+      margin-left: 5px;
+      position: absolute;
+      right: 0;
+    }
   }
 }
 </style>

@@ -28,14 +28,8 @@
 
 <script>
 import "animate.css";
-import appConst from "../util/appConst";
 export default {
   name: "Editor",
-  data() {
-    return {
-      http: appConst.BACKEND_DOMAIN
-    };
-  },
   computed: {
     elementPosition() {
       return ele => {

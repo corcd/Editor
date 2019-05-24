@@ -1,6 +1,10 @@
 <template>
-  <aside class="element" @mousedown="mousedown">
-    <Operate class="operate" v-show="element === editingElement" :element="element"/>
+  <aside
+    class="element"
+    :style="{'top':element.top+'px','left':element.left+'px','z-index':element.index}"
+    @mousedown="mousedown"
+  >
+    <Operate class="operate" v-show="(element.id == elementSelected.id)" :element="element"/>
     <section class="content">
       <div
         :class="element['playing'] && 'animated ' + this.element['animatedName']"
@@ -13,7 +17,6 @@
 </template>
 
 <script>
-import Operate from "./../OperateNew";
 export default {
   props: ["element"],
   computed: {
@@ -66,20 +69,20 @@ export default {
 };
 </script>
 
-<style lang='less' scoped>
+<style lang='scss' scoped>
 .element {
   position: absolute;
   cursor: move;
-}
 
-.operate {
-  z-index: 2;
-}
+  .operate {
+    z-index: 2;
+  }
 
-.content {
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  position: relative;
-  z-index: 1;
+  .content {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    position: relative;
+    z-index: 1;
+  }
 }
 </style>

@@ -6,6 +6,7 @@
         <Button icon="ios-arrow-back" disabled></Button>
         <Button icon="ios-arrow-forward" disabled></Button>
       </ButtonGroup>
+      <h3>UserId: {{appid}}</h3>
     </div>
     <div class="btn-group">
       <Upload
@@ -19,7 +20,9 @@
       >
         <Button icon="ios-cloud-upload-outline">Upload files</Button>
       </Upload>
-      <Button class="btn-preview" @click="preview" type="primary">Proview</Button>
+      <Divider type="vertical"/>
+      <Button type="primary" class="btn-save" @click="_save">Save</Button>
+      <Button class="btn-preview" @click="_preview" type="primary" disabled>Preview</Button>
     </div>
   </div>
 </template>
@@ -27,6 +30,9 @@
 <script>
 export default {
   name: "StatusBar",
+  props: {
+    appid: String
+  },
   data() {
     return {
       imageUrl: "",
@@ -69,7 +75,7 @@ export default {
             this.imageUrl = "http://" + this.qiniuaddr + "/" + res.data.key;
             this.$Message.success("Upload Success");
             console.log(res);
-            this.$emit("elementAdd",this.imageUrl,"img");
+            this.$emit("elementAdd", this.imageUrl, "img");
           })
           .catch(err => {
             this.$Message.error("Upload Error");
@@ -103,8 +109,11 @@ export default {
       this.upqiniu(file);
       return false; // 阻止Upload的默认上传
     },
-    preview() {
+    _preview() {
       this.$emit("toPreview");
+    },
+    _save() {
+      this.$emit("triggerSave");
     }
   }
 };
@@ -117,6 +126,7 @@ export default {
   background: #515a6e;
   display: flex;
   align-items: center;
+  z-index: 9999;
 
   .btn-do-group {
     position: absolute;
@@ -129,6 +139,11 @@ export default {
       color: #fff;
       margin-right: 20px;
     }
+
+    h3 {
+      margin-left: 20px;
+      color: #96a9d3;
+    }
   }
 
   .btn-group {
@@ -138,14 +153,22 @@ export default {
     justify-content: flex-start;
     align-items: center;
 
+    .ivu-divider {
+      margin-right: 48px;
+    }
+
     .ivu-upload {
       display: flex;
       justify-content: center;
       align-items: center;
-      margin-right: 20px;
+      margin-right: 38px;
 
       .ivu-upload-list {
       }
+    }
+
+    .btn-save {
+      margin-right: 20px;
     }
   }
   // .demo-drawer-profile {

@@ -1,29 +1,20 @@
 <template>
   <div class="preview">
-    <div class="header">
-      <div class="statusbar">
-        <div class="group">
-          <h1>Preview</h1>
-          <Button class="btn-backward" @click="backward">Back</Button>
-        </div>
-      </div>
-    </div>
-    <div class="container">
-      <div
-        id="canvas"
-        class="showCanvas"
-        v-bind:class="[previewResolution == '480P' ? 'simpleCanvas':'',previewResolution == '720P' ? 'normalCanvas':'',previewResolution == '1080P' ? 'extendCanvas':'']"
+    <div
+      id="canvas"
+      class="showCanvas"
+      v-bind:class="[stageResolution == '480P' ? 'simpleCanvas':'',stageResolution == '720P' ? 'normalCanvas':'',stageResolution == '1080P' ? 'extendCanvas':'']"
+    >
+      <img
+        id="ele_stage"
+        class="showImg"
+        alt="img"
+        draggable="false"
+        v-for="element in elements"
+        :key="element.id"
+        :src="element.imgSrc"
+        :style="{'top':element.top+'px','left':element.left+'px','width':element.width+'px','height':element.height+'px','opacity':(element.alpha/100.0),'z-index':element.index}"
       >
-        <img
-          id="ele_stage"
-          class="showImg"
-          alt="Vue logo"
-          v-for="element in elements"
-          :key="element.id"
-          :src="element.imgSrc"
-          :style="{'top':element.top+'px','left':element.left+'px','width':element.width+'px','height':element.height+'px','opacity':(element.alpha/100.0),'z-index':element.index}"
-        >
-      </div>
     </div>
   </div>
 </template>
@@ -34,96 +25,110 @@ export default {
   components: {},
   data() {
     return {
-      elements: {},
-      previewResolution: { type: String, default: "480P" },
-      mag: 1
+      appid: "",
+      stageResolution: "720P",
+      coefficient: 1,
+      elements: []
     };
   },
-  mounted() {
-    this.elements = this.$route.query.data;
-    this.previewResolution = this.$route.query.Resolution;
-    this.mag = this.$route.query.Mag;
-  },
-  beforeDestroy() {},
-  methods: {
-    backward() {
-      this.$router.go(-1);
+  sockets: {
+    connect() {
+      console.log("socket connected");
+    },
+    customEmit(val) {
+      console.log(
+        'this method was fired by the socket server. eg: io.emit("customEmit", data)'
+      );
     }
+  },
+  created() {
+    this.appid = this.$utils.parseUrl("appid");
+    if (this.appid == null) {
+      this.$Message.error("No user");
+      console.log("No user:");
+      this.$router.push({
+        path: "/error",
+        query: { msg: "No user" }
+      });
+    }
+    console.log("current user:", this.appid);
+  },
+  mounted() {
+    let socketObj = { appid: this.appid, type: "preview" };
+    this.$socket.emit("online", socketObj);
+
+    this.$socket.on("clearStage", () => {
+      this.$nextTick(() => {
+        this.elements = [];
+        console.log(this.elements);
+      });
+    });
+
+    this.$socket.on("receiveMsgPre", data => {
+      console.log(data);
+      this.coefficient = data.Mag;
+      this.stageResolution = data.Resolution;
+      // if (data.Resolution == "480P") coefficient = 1;
+      // else if (data.Resolution == "720P") coefficient = 1.5;
+      // else if (data.Resolution == "1080P") coefficient = 1.5 * 1.5;
+      // else coefficient = 1;
+
+      this.elements = data.Objs;
+      // this.$nextTick(() => {
+      //   this.elements = data.Objs;
+      // });
+    });
+  },
+  beforeDestroy() {
+    //this.$socket.close();
+  },
+  methods: {
+    // setPosition() {
+    //   let ele = document.getElementById("ele_stage");
+    //   ele.style.top = this.currentTop + "px";
+    //   ele.style.left = this.currentLeft + "px";
+    //   console.log(ele.style.top, ele.style.left);
+    // }
   }
 };
 </script>
 
 <style lang="scss" scoped>
 .simpleCanvas {
-  width: 853px;
-  height: 480px;
+  // width: 853px;
+  // height: 480px;
 }
 
 .normalCanvas {
-  width: 1280px;
-  height: 720px;
+  // width: 1280px;
+  // height: 720px;
 }
 
 .extendCanvas {
-  width: 1920px;
-  height: 1080px;
+  // width: 1920px;
+  // height: 1080px;
 }
 
 .preview {
-  width: 100%;
-  height: 100%;
-  -webkit-animation-fill-mode: none;
+  width: 100vw;
+  height: 100vh;
+  background-color: transparent !important;
 
-  .header {
-    width: 100%;
-    display: fixed;
-    top: 0;
-
-    .statusbar {
-      width: 100%;
-      height: 60px;
-      background: #515a6e;
-      display: flex;
-      align-items: center;
-
-      .group {
-        position: absolute;
-        left: 20px;
-        display: flex;
-        justify-content: flex-start;
-        align-items: center;
-
-        h1 {
-          color: #fff;
-          margin-right: 20px;
-        }
-      }
-    }
-  }
-
-  .container {
+  .showCanvas {
     width: 100%;
     height: 100%;
-    min-height: 600px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background: #f5f7f9;
+    margin: 0;
+    padding: 0;
+    background-color: transparent;
+    border: 1px grey solid;
+    position: relative;
+    overflow: hidden;
+    z-index: 0;
 
-    .showCanvas {
+    img {
       margin: 0;
       padding: 0;
-      border: 1px grey solid;
-      box-shadow: 0px 0px 15px #7d828f;
-      position: relative;
-      overflow: hidden;
-      z-index: 0;
-
-      img {
-        margin: 0;
-        padding: 0;
-        position: absolute;
-      }
+      position: absolute;
     }
   }
 }

@@ -4,30 +4,36 @@ import Vuex from "vuex";
 Vue.use(Vuex);
 
 const store = new Vuex.Store({
-  state: {
-    elements: [],
-    lastIndex: 1
-  },
+  state: {},
   mutations: {
-    indexIncrement(state, n) {
-      state.lastIndex = n;
+    indexIncrement(state, obj) {
+      state[obj.id].lastIndex = obj.index;
     },
     addElements(state, obj) {
-      state.elements.push(obj);
+      state[obj.id].elements.push(obj);
     },
-    updateElements(state, arr) {
-      state.elements = arr;
+    updateElements(state, obj) {
+      state[obj.id].elements = obj.eles;
+    },
+    createNode(state, obj) {
+      Vue.set(state, obj.id, {
+        elements: [],
+        lastIndex: 1
+      });
     }
   },
   actions: {
-    // indexIncrement({ commit }, n) {
-    //   commit("indexIncrement", n);
-    // },
+    indexIncrement({ commit }, obj) {
+      commit("indexIncrement", obj);
+    },
     addElements({ commit }, obj) {
       commit("addElements", obj);
     },
-    updateElements({ commit }, arr) {
-      commit("updateElements", arr);
+    updateElements({ commit }, obj) {
+      commit("updateElements", obj);
+    },
+    createNode({ commit }, obj) {
+      commit("createNode", obj);
     }
   }
 });

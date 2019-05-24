@@ -13,7 +13,7 @@
         v-for="element in elements"
         :key="element.id"
         :src="element.imgSrc"
-        :style="{'top':element.top*coefficient+'px','left':element.left*coefficient+'px','width':element.width+'px','height':element.height+'px','opacity':(element.alpha/100.0),'z-index':element.index}"
+        :style="{'top':element.top+'px','left':element.left+'px','width':element.width+'px','height':element.height+'px','opacity':(element.alpha/100.0),'z-index':element.index}"
       >
     </div>
   </div>
@@ -25,7 +25,8 @@ export default {
   components: {},
   data() {
     return {
-      stageResolution: "480P",
+      appid: "",
+      stageResolution: "720P",
       coefficient: 1,
       elements: []
     };
@@ -40,8 +41,28 @@ export default {
       );
     }
   },
+  created() {
+    this.appid = this.$utils.parseUrl("appid");
+    if (this.appid == null) {
+      this.$Message.error("No user");
+      console.log("No user:");
+      this.$router.push({
+        path: "/error",
+        query: { msg: "No user" }
+      });
+    }
+    console.log("current user:", this.appid);
+  },
   mounted() {
-    this.$socket.emit("online", "demo-stage");
+    let socketObj = { appid: this.appid, type: "stage" };
+    this.$socket.emit("online", socketObj);
+
+    this.$socket.on("clearStage", () => {
+      this.$nextTick(() => {
+        this.elements = [];
+        console.log(this.elements);
+      });
+    });
 
     this.$socket.on("receiveMsg", data => {
       console.log(data);
@@ -58,14 +79,14 @@ export default {
       // });
     });
   },
-  beforeDestroy() {},
+  beforeDestroy() {
+    //this.$socket.close();
+  },
   methods: {
     // setPosition() {
     //   let ele = document.getElementById("ele_stage");
-
     //   ele.style.top = this.currentTop + "px";
     //   ele.style.left = this.currentLeft + "px";
-
     //   console.log(ele.style.top, ele.style.left);
     // }
   }
@@ -89,13 +110,16 @@ export default {
 }
 
 .stage {
+  background-color: transparent !important;
+
   .showCanvas {
     margin: 0;
     padding: 0;
+    background-color: transparent;
     border: 1px grey solid;
     position: relative;
-    overflow: hidden;
-    z-index: 0;
+    //overflow: hidden;
+    //z-index: 0;
 
     img {
       margin: 0;

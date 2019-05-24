@@ -2,9 +2,11 @@
   <div
     class="wrap"
     :style="{'top':element.top+'px','left':element.left+'px','z-index':element.index}"
+    :tabindex="element.index"
     @click.stop="showEditor"
     @mousedown="mousedown"
     @mouseup="mouseup"
+    @keydown="keyboard($event)"
   >
     <img
       v-if="element.type==='img'"
@@ -18,10 +20,11 @@
 </template>
 
 <script>
-import appConst from "../../util/appConst";
 export default {
   name: "ImgElement",
   props: {
+    resolution: String,
+    zoom: Number,
     element: {
       type: Object,
       require: true
@@ -41,11 +44,36 @@ export default {
       currentY: 0,
       flag: false,
       scaleFlag: false,
-      direction: "",
-      http: appConst.BACKEND_DOMAIN
+      direction: ""
     };
   },
   methods: {
+    keyboard(event) {
+      if (event.keyCode == 13) {
+        //this.$Message.info("Enter");
+      } else if (event.keyCode == 8) {
+        //this.$Message.info("BackSpace");
+        this.delElementSelected(this.element);
+      } else if (event.keyCode == 46) {
+        //this.$Message.info("Delete");
+        this.delElementSelected(this.element);
+      } else if (event.keyCode == 37) {
+        // 左
+        this.element.left--;
+      } else if (event.keyCode == 38) {
+        // 上
+        this.element.top--;
+      } else if (event.keyCode == 39) {
+        // 右
+        this.element.left++;
+      } else if (event.keyCode == 40) {
+        // 下
+        this.element.top++;
+      }
+    },
+    delElementSelected(ele) {
+      this.$emit("delElementSelected", ele);
+    },
     showEditor() {
       let ele = this.element;
       //ele.edit = true;
@@ -63,21 +91,19 @@ export default {
       document
         .querySelector(".inside-container")
         .addEventListener("click", click);
-      document
-        .querySelector(".dragCanvas")
-        .addEventListener("click", click);
+      document.querySelector(".dragCanvas").addEventListener("click", click);
     },
     // 处理元素拖动
     move() {
       document.querySelector(".home").onmousemove = event => {
-        var e = event || window.event;
+        let e = event || window.event;
         if (this.flag) {
           let nowX = e.clientX;
           let nowY = e.clientY;
           let disX = nowX - this.currentX;
           let disY = nowY - this.currentY;
-          this.element.top = parseInt(this.top) + disY;
-          this.element.left = parseInt(this.left) + disX;
+          this.element.top = parseInt(this.top + disY / this.zoom);
+          this.element.left = parseInt(this.left + disX / this.zoom);
         }
       };
     },
@@ -109,6 +135,10 @@ export default {
 .wrap {
   position: absolute;
   cursor: move;
+
+  &:focus {
+    outline: none;
+  }
 
   img {
     position: absolute;

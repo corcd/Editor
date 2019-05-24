@@ -1,24 +1,45 @@
 <template>
   <div class="home">
     <div class="header">
-      <StatusBar @toPreview="toPreview" @elementAdd="elementAdd"></StatusBar>
+      <StatusBar
+        :appid="appid"
+        @toPreview="toPreview"
+        @triggerSave="exportJSON('')"
+        @elementAdd="elementAdd"
+      ></StatusBar>
     </div>
-    <div class="container">
+    <div class="content">
       <SideBar
+        :appid="appid"
         :elementSelected="eleSelected"
         :exportable="isExportable"
         @changeResolution="changeResolution"
         @changeSocketExport="changeSocketExport"
       ></SideBar>
       <div class="inside-container">
-        <div id="canvas" class="dragCanvas">
+        <Button
+          type="primary"
+          shape="circle"
+          size="small"
+          class="btn-trigger"
+          @click="triggerBg"
+        >White/Black</Button>
+        <div
+          id="canvas"
+          class="dragCanvas"
+          v-bind:class="[resolution == '480P' ? 'simpleCanvas':'',resolution == '720P' ? 'normalCanvas':'',resolution == '1080P' ? 'extendCanvas':'',isCanvasColorBlack ? 'blackCanvas':'']"
+          v-bind:style="{'zoom': zoom}"
+        >
           <ImgElement
             v-for="element in elements"
             :key="element.id"
+            :resolution="resolution"
+            :zoom="zoom"
             :element="element"
             :elementSelected="eleSelected"
             @getElementSelected="getElementSelected"
             @clearElementSelected="clearElementSelected"
+            @delElementSelected="delElementSelected"
           ></ImgElement>
         </div>
       </div>
@@ -27,30 +48,38 @@
         :elementSelected="eleSelected"
         @getElementSelected="getElementSelected"
         @clearElementSelected="clearElementSelected"
+        @delElementSelected="delElementSelected"
       ></LayBar>
     </div>
     <div class="footer">
-      <StatisticsBar :elementSelected="eleSelected"></StatisticsBar>
+      <StatisticsBar
+        :zoom="zoom"
+        :elementSelected="eleSelected"
+        @changeScaleValue="changeScaleValue"
+      ></StatisticsBar>
     </div>
   </div>
 </template>
 
 <script>
 import "animate.css";
-import appConst from "../util/appConst";
+import { setInterval, clearInterval } from "timers";
 export default {
   name: "home",
   components: {},
   data() {
     return {
-      isExportable: true,
-      resolution: "480P",
+      appid: "",
+      timer: null,
+      isCanvasColorBlack: false,
+      isExportable: false,
+      resolution: "720P",
+      zoom: 1,
       mag: 1,
       data: {},
-      elements: JSON.parse(JSON.stringify(this.$store.state.elements)),
+      elements: [],
       eleSelected: {},
-      lastIndex: this.$store.state.lastIndex,
-      http: appConst.BACKEND_DOMAIN
+      lastIndex: 0
     };
   },
   sockets: {
@@ -64,23 +93,70 @@ export default {
     }
   },
   created() {
-    //this.elements = this.$store.state.elements;
+    this.appid = this.$utils.parseUrl("appid");
+    if (this.appid == null) {
+      this.$Message.error("No user");
+      console.log("No user:");
+      this.$router.push({
+        path: "/error",
+        query: { msg: "No user" }
+      });
+    } else {
+      if (this.$store.state[this.appid] != undefined) {
+        console.log("current user:", this.appid);
+        this.elements = this.$store.state[this.appid].elements;
+        this.lastIndex = this.$store.state[this.appid].lastIndex;
+        console.log(this.lastIndex);
+      } else {
+        this.$store.dispatch("createNode", {
+          id: this.appid
+        });
+        console.log("new user:", this.appid);
+        this.elements = [];
+        this.lastIndex = 1;
+      }
+    }
   },
   mounted() {
-    this.$socket.emit("online", "demo-editor");
+    let socketObj = { appid: this.appid, type: "editor" };
+    this.$socket.emit("online", socketObj);
+
+    this.$socket.on("onceUpdate", () => {
+      this.updateData();
+    });
 
     this.$watch("elements", this.updateData, { deep: true });
+
+    // auto-keep
+    this.timer = setInterval(() => {
+      this.exportJSON("auto save");
+    }, 120000);
   },
   beforeDestroy() {
-    let temp = JSON.parse(JSON.stringify(this.elements));
-    this.$store.dispatch("updateElements", temp);
-    this.$store.commit("indexIncrement", this.lastIndex);
-
+    //let temp = JSON.parse(JSON.stringify(this.elements));
+    //this.$socket.close();
     // 节流
-    this.exportJSON();
+    //this.exportJSON("");
+    clearInterval(this.timer);
+    this.timer = null;
   },
+  destroyed() {},
   computed: {},
   methods: {
+    keyboard(event) {
+      if (event.keyCode == 13) {
+        this.$Message.info("Enter");
+      }
+    },
+    changeScaleValue(v) {
+      this.$nextTick(() => {
+        this.zoom = v;
+      });
+    },
+    triggerBg() {
+      if (this.isCanvasColorBlack) this.isCanvasColorBlack = false;
+      else this.isCanvasColorBlack = true;
+    },
     elementAdd(url, type) {
       let newObj = {
         id: this.lastIndex,
@@ -94,12 +170,19 @@ export default {
         index: 1
       };
       this.lastIndex++;
-      this.$store.commit("indexIncrement", this.lastIndex);
+      //this.$store.commit("indexIncrement", this.lastIndex);
       //console.log(newObj);
-      //this.elements.push(newObj);
-      this.$store.dispatch("addElements", newObj);
-      this.lastIndex = this.$store.state.lastIndex;
-      this.elements = JSON.parse(JSON.stringify(this.$store.state.elements));
+      this.elements.push(newObj);
+      //this.$Message.success("New Object");
+      //this.$store.dispatch("addElements", newObj);
+      //this.lastIndex = this.$store.state.lastIndex;
+      //this.elements = JSON.parse(JSON.stringify(this.$store.state.elements));
+    },
+    delElementSelected(ele) {
+      this.elements.splice(
+        this.elements.findIndex(item => item.id === ele.id),
+        1
+      );
     },
     getElementSelected(ele) {
       // 跟随变化
@@ -118,15 +201,18 @@ export default {
         index: 0
       };
     },
-    changeResolution(reso, mag) {
+    changeResolution(reso, mag, zoom) {
       this.resolution = reso;
       this.mag = mag;
+      this.zoom = zoom;
       this.updateData();
     },
     changeSocketExport(boolean) {
       this.isExportable = boolean;
+      this.updateData();
     },
     toPreview() {
+      this.exportJSON("");
       this.$router.push({
         path: "/preview",
         query: {
@@ -138,25 +224,53 @@ export default {
     },
     updateData() {
       // 输出至 Stage
+      let socketData = {
+        Resolution: this.resolution,
+        Mag: this.mag,
+        Objs: this.elements
+      };
       if (this.isExportable) {
         this.$socket.emit("sendMsg", {
-          Resolution: this.resolution,
-          Mag: this.mag,
-          Objs: this.elements
+          appid: this.appid,
+          data: socketData
         });
       }
     },
-    exportJSON() {
+    exportJSON(type) {
+      this.$Loading.start();
+      console.log(this.elements);
+      this.$store.dispatch("updateElements", {
+        id: this.appid,
+        eles: this.elements
+      });
+      this.$store.dispatch("indexIncrement", {
+        id: this.appid,
+        index: this.lastIndex
+      });
+      let _this = this;
+      console.log(_this.$store.state);
       this.$axios
         .post(
           "http://139.196.92.199:3006/data",
-          JSON.parse(JSON.stringify(this.$store.state))
+          JSON.parse(JSON.stringify(_this.$store.state))
         )
-        .then(response => {
+        .then(function(response) {
           console.log(response);
+          if (response.data.code == 1) {
+            if (type != "") {
+              _this.$Message.success("Auto Save");
+            } else {
+              _this.$Message.success("Save OK");
+            }
+            _this.$Loading.finish();
+          } else {
+            _this.$Message.error("Save Failed");
+            _this.$Loading.error();
+          }
         })
-        .catch(err => {
-          this.$Message.error("Save Error");
+        .catch(function(error) {
+          _this.$Message.error("Save Error");
+          _this.$Loading.error();
         });
     }
   }
@@ -164,6 +278,28 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+.blackCanvas {
+  background-color: #1a1a1a !important;
+}
+
+.simpleCanvas {
+  width: 853px;
+  height: 480px;
+  zoom: 1;
+}
+
+.normalCanvas {
+  width: 1280px;
+  height: 720px;
+  zoom: 0.65;
+}
+
+.extendCanvas {
+  width: 1920px;
+  height: 1080px;
+  zoom: 0.45;
+}
+
 .home {
   width: 100%;
   height: 100%;
@@ -171,17 +307,21 @@ export default {
 
   .header {
     width: 100%;
-    display: fixed;
-    top: 0;
+    height: 60px;
   }
 
-  .container {
+  .content {
     width: 100%;
-    height: 100%;
+    min-height: 600px;
+    position: absolute;
+    top: 60px;
+    bottom: 30px;
+    left: 0;
     display: flex;
     justify-content: flex-start;
     align-items: center;
     background: #f5f7f9;
+    overflow: hidden;
 
     .inside-container {
       width: 100%;
@@ -190,10 +330,15 @@ export default {
       display: flex;
       justify-content: center;
       align-items: center;
+      position: relative;
+
+      .btn-trigger {
+        position: absolute;
+        top: 15px;
+        left: 20px;
+      }
 
       .dragCanvas {
-        width: 853px;
-        height: 480px;
         margin: 0;
         padding: 0;
         border: 0;
@@ -208,6 +353,13 @@ export default {
         }
       }
     }
+  }
+
+  .footer {
+    width: 100%;
+    height: 30px;
+    position: fixed;
+    bottom: 0;
   }
 }
 </style>

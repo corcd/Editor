@@ -6,11 +6,17 @@
         <Input v-model="elementSelected.imgSrc" placeholder="N/A" readonly></Input>
       </FormItem>
       <Divider>Position</Divider>
-      <FormItem label="Width:">
+      <FormItem label="Width:" style="margin-bottom: 0 !important;">
         <Input v-model="elementSelected.width" placeholder="0">
           <span slot="append">px</span>
         </Input>
       </FormItem>
+      <div class="form-item-lock">
+        <a @click="changeProportional">
+          <Icon type="md-lock" size="16" v-show="isProportional"/>
+          <Icon type="md-unlock" size="16" color="#96a9d3" v-show="!isProportional"/>
+        </a>
+      </div>
       <FormItem label="Height:">
         <Input v-model="elementSelected.height" placeholder="0">
           <span slot="append">px</span>
@@ -30,12 +36,18 @@
         <Slider v-model="elementSelected.alpha" show-input></Slider>
       </FormItem>
       <Divider>Export</Divider>
+      <FormItem label="Clear:">
+        <Button type="warning" style="width: 100%" @click="clearStage" ghost>Stage Clear</Button>
+      </FormItem>
       <FormItem label="Display:">
         <Select v-model="selectData">
           <Option value="480P">480P (853*480)</Option>
           <Option value="720P">720P (1280*720)</Option>
           <Option value="1080P">1080P (1920*1080)</Option>
         </Select>
+      </FormItem>
+      <FormItem label="Apply:">
+        <Button style="width: 100%" @click="applyLayout">Apply Layout</Button>
       </FormItem>
       <FormItem label="Export:">
         <i-switch v-model="exportData" size="large">
@@ -49,9 +61,11 @@
 
 <script>
 import { type } from "os";
+import { setTimeout } from "timers";
 export default {
   name: "SideBar",
   props: {
+    appid: String,
     elementSelected: {
       type: Object,
       default: null
@@ -63,33 +77,66 @@ export default {
   },
   data() {
     return {
-      selectData: "480P",
+      selectData: "720P",
+      zoom: 1,
       exportData: this.exportable,
+      isProportional: true,
       videoMag: 1,
       realTop: 0.0,
       realLeft: 0.0
     };
   },
-  methods: {},
+  methods: {
+    changeProportional() {
+      if (this.isProportional) this.isProportional = false;
+      else this.isProportional = true;
+    },
+    applyLayout() {
+      this.exportData = true;
+      setTimeout(() => {
+        this.exportData = false;
+      }, 500);
+    },
+    clearStage() {
+      let _this = this;
+      this.$emit("changeSocketExport", false);
+      this.exportData = false;
+
+      this.$axios
+        .post("http://139.196.92.199:3006/clear", { appid: this.appid })
+        .then()
+        .catch(err => {
+          _this.$Message.error("Stage Error");
+        });
+    }
+  },
   watch: {
     selectData: {
       handler(newValue, oldValue) {
         if (newValue == "480P") {
-          this.$Message.success("480P");
+          //this.$Message.success("480P");
+          //this.$emit("setResolution", "480P");
+          this.zoom = 1;
           this.videoMag = 1;
         } else if (newValue == "720P") {
-          this.$Message.success("720P");
+          //this.$Message.success("720P");
+          //this.$emit("setResolution", "720P");
+          this.zoom = 0.65;
           this.videoMag = 1.5;
         } else if (newValue == "1080P") {
-          this.$Message.success("1080P");
+          //this.$Message.success("1080P");
+          //this.$emit("setResolution", "1080P");
+          this.zoom = 0.45;
           this.videoMag = 1.5 * 1.5;
         } else {
+          //this.$emit("setResolution", "480P");
           this.$Message.error("Error");
           this.videoMag = 1;
         }
         let reso = newValue;
         let mag = this.videoMag;
-        this.$emit("changeResolution", reso, mag);
+        let zoom = this.zoom;
+        this.$emit("changeResolution", reso, mag, zoom);
       },
       immediate: true
     },
@@ -97,11 +144,7 @@ export default {
       handler(newValue, oldValue) {
         if (newValue == true) {
           this.$emit("changeSocketExport", true);
-          this.$Message.success({
-            content: "Socket On",
-            top: 10,
-            duration: 10
-          });
+          this.$Message.success("Socket On");
         } else if (newValue == false) {
           this.$emit("changeSocketExport", false);
           this.$Message.warning("Socket Off");
@@ -118,7 +161,8 @@ export default {
 
 <style lang="scss" scoped>
 .sidebar {
-  width: 350px;
+  width: 240px;
+  min-width: 240px;
   height: 100%;
   min-height: 600px;
   display: flex;
@@ -128,10 +172,23 @@ export default {
   border-right: 1px solid #d7dde4;
   //box-shadow: 0px 0px 6px #c2c2c2;
   background: #fff;
+  overflow-y: auto;
 
   form {
     width: 90%;
-    margin-top: 10px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+
+    .form-item-lock {
+      width: 100%;
+      margin-top: 0;
+      margin-bottom: 0;
+      padding-right: 82%;
+    }
+
+    .ivu-form-item {
+      margin-bottom: 15px;
+    }
   }
 }
 </style>
