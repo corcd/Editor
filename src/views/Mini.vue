@@ -1,10 +1,13 @@
 <template>
   <div
     class="mini home"
-    v-bind:class="[resolution == '480P' ? 'simpleCanvas':'',resolution == '720P' ? 'normalCanvas':'',resolution == '1080P' ? 'extendCanvas':'']"
+    v-bind:class="[resolution == '480P' ? 'simpleFrame':'',resolution == '720P' ? 'normalFrame':'',resolution == '1080P' ? 'extendFrame':'']"
   >
     <div class="container inside-container">
-      <div class="editor dragCanvas" v-bind:class="[isEditorColorBlack ? 'easyeditor':'']">
+      <div
+        class="editor dragCanvas"
+        v-bind:class="[resolution == '480P' ? 'simpleCanvas':'',resolution == '720P' ? 'normalCanvas':'',resolution == '1080P' ? 'extendCanvas':'',isEditorColorBlack ? 'easyeditor':'']"
+      >
         <ImgElement
           v-for="element in elements"
           :key="element.id"
@@ -79,7 +82,7 @@ export default {
       isEditorColorBlack: false,
       selectData: "720P",
       resolution: "720P",
-      zoom: 1,
+      zoom: 0.65,
       mag: 1,
       data: {},
       elements: [],
@@ -317,25 +320,25 @@ export default {
   watch: {
     selectData: {
       handler(newValue, oldValue) {
-        let html = document.getElementsByTagName("html")[0];
-        if (newValue == "480P") {
-          html.style.width = "853px";
-          html.style.height = "480px";
-          //this.zoom = 1;
-        } else if (newValue == "720P") {
-          html.style.width = "1280px";
-          html.style.height = "720px";
-          //this.zoom = 0.65;
-        } else if (newValue == "1080P") {
-          html.style.width = "1920px";
-          html.style.height = "1080px";
-          //this.zoom = 0.45;
-        } else {
-          html.style.width = "853px";
-          html.style.height = "480px";
-          //this.zoom = 1;
-          this.videoMag = 1;
-        }
+        // let html = document.getElementsByTagName("html")[0];
+        // if (newValue == "480P") {
+        //   html.style.width = "853px";
+        //   html.style.height = "480px";
+        //   this.zoom = 1;
+        // } else if (newValue == "720P") {
+        //   html.style.width = "1280px";
+        //   html.style.height = "720px";
+        //   this.zoom = 0.65;
+        // } else if (newValue == "1080P") {
+        //   html.style.width = "1920px";
+        //   html.style.height = "1080px";
+        //   this.zoom = 0.45;
+        // } else {
+        //   html.style.width = "853px";
+        //   html.style.height = "480px";
+        //   this.zoom = 1;
+        //   this.videoMag = 1;
+        // }
         this.resolution = newValue;
       },
       immediate: true
@@ -349,22 +352,37 @@ export default {
   background-color: #1a1a1a !important;
 }
 
+.simpleFrame {
+  width: 853px;
+  height: 480px;
+}
+
+.normalFrame {
+  width: 1280px * 0.65;
+  height: 720px * 0.65;
+}
+
+.extendFrame {
+  width: 1920px * 0.45;
+  height: 1080px * 0.45;
+}
+
 .simpleCanvas {
   width: 853px;
   height: 480px;
-  //zoom: 1;
+  zoom: 1;
 }
 
 .normalCanvas {
   width: 1280px;
   height: 720px;
-  //zoom: 0.65;
+  zoom: 0.65;
 }
 
 .extendCanvas {
   width: 1920px;
   height: 1080px;
-  //zoom: 0.45;
+  zoom: 0.45;
 }
 
 .mini {

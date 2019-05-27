@@ -2,7 +2,7 @@
   <div
     class="layerpicker"
     :class="{'layer-selected':(element.id == elementSelected.id)}"
-    @click="layerSelect"
+    @click.stop="layerSelect"
   >
     <!-- <img alt="layer" :src="element.imgSrc"> -->
     <div class="layerpicker-ele">
@@ -74,6 +74,7 @@ export default {
   justify-content: space-between;
   align-items: center;
   border: 1px solid #d7dde4;
+  background-color: #fff;
   cursor: pointer;
 
   .layerpicker-ele {
