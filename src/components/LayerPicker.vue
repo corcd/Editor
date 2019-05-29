@@ -6,12 +6,14 @@
   >
     <!-- <img alt="layer" :src="element.imgSrc"> -->
     <div class="layerpicker-ele">
-      <img alt="img" draggable="false" :src="element.imgSrc">
+      <img alt="img" draggable="false" v-if="element.type=='img'" :src="element.imgSrc">
+      <span draggable="false" v-if="element.type=='word'">T</span>
     </div>
     <div class="layerpicker-info">
       <div class="layerpicker-indicator">
         <Icon type="ios-browsers" size="14"/>
-        <h3>Layer {{element.id}}</h3>
+        <h3 v-if="element.type=='img'">Layer {{element.id}}</h3>
+        <h3 v-if="element.type=='word'">Text {{element.id}}</h3>
       </div>
       <span>Z-Index: {{element.index}}</span>
     </div>
@@ -89,6 +91,13 @@ export default {
       max-width: 50px;
       max-height: 50px;
       margin-left: 5px;
+    }
+
+    span {
+      margin-left: 5px;
+      font-size: 45px;
+      text-align: center;
+      vertical-align: middle;
     }
   }
 

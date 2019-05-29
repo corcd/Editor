@@ -1,9 +1,12 @@
 <template>
   <div class="sidebar">
-    <Form :label-width="50">
+    <Form :label-width="60">
       <Divider>Profile</Divider>
-      <FormItem label="Source:">
+      <FormItem label="Source:" v-show="elementSelected.type=='img'">
         <Input v-model="elementSelected.imgSrc" placeholder="N/A" readonly></Input>
+      </FormItem>
+      <FormItem label="Text:" v-show="elementSelected.type=='word'">
+        <Input v-model="elementSelected.text" placeholder="N/A"></Input>
       </FormItem>
       <Divider>Position</Divider>
       <FormItem label="Width:" style="margin-bottom: 0 !important;">
@@ -17,7 +20,7 @@
           <Icon type="md-unlock" size="16" color="#96a9d3" v-show="!isProportional"/>
         </a>
       </div>
-      <FormItem label="Height:">
+      <FormItem label="Height:" style="margin-top: 0 !important;">
         <Input v-model="elementSelected.height" placeholder="0">
           <span slot="append">px</span>
         </Input>
@@ -31,6 +34,27 @@
         <Input v-model="elementSelected.left" placeholder="0">
           <span slot="append">px</span>
         </Input>
+      </FormItem>
+      <FormItem label="Font:" v-show="elementSelected.type=='word'">
+        <Select v-model="elementSelected.fontFamily">
+          <Option v-for="item in fontFamily" :key="item" :label="item" :value="item"></Option>
+        </Select>
+      </FormItem>
+      <FormItem label="FontSize:" v-show="elementSelected.type=='word'">
+        <Input v-model="elementSelected.fontSize" placeholder="0">
+          <span slot="append">px</span>
+        </Input>
+      </FormItem>
+      <FormItem label="LineHeight:" v-show="elementSelected.type=='word'">
+        <Input v-model="elementSelected.lineHeight" placeholder="0">
+          <span slot="append">px</span>
+        </Input>
+      </FormItem>
+      <FormItem label="FontWeight:" v-show="elementSelected.type=='word'">
+        <i-switch size="large" v-model="switchStatus" @on-change="changeLineWeight">
+          <span slot="open">Bold</span>
+          <span slot="close">Norm</span>
+        </i-switch>
       </FormItem>
       <FormItem label="Alpha:">
         <Slider v-model="elementSelected.alpha" show-input></Slider>
@@ -51,8 +75,8 @@
       </FormItem>
       <FormItem label="Export:">
         <i-switch v-model="exportData" size="large">
-          <span slot="on">On</span>
-          <span slot="off">Off</span>
+          <span slot="open">On</span>
+          <span slot="close">Off</span>
         </i-switch>
       </FormItem>
     </Form>
@@ -83,19 +107,37 @@ export default {
       isProportional: true,
       videoMag: 1,
       realTop: 0.0,
-      realLeft: 0.0
+      realLeft: 0.0,
+      fontFamily: [
+        "Helvetica",
+        "SimSun",
+        "SumHei",
+        "Microsoft YaHei",
+        "YouYuan",
+        "sans-serif"
+      ],
+      switchStatus: false
     };
   },
+  created() {
+    if (this.elementSelected.lineWeight == "bold") this.switchStatus = true;
+    else this.switchStatus = false;
+  },
   methods: {
+    changeLineWeight(status) {
+      if (status) {
+        this.elementSelected.lineWeight = "bold";
+      } else {
+        this.elementSelected.lineWeight = "normal";
+      }
+      console.log(this.elementSelected.lineWeight);
+    },
     changeProportional() {
       if (this.isProportional) this.isProportional = false;
       else this.isProportional = true;
     },
     applyLayout() {
-      this.exportData = true;
-      setTimeout(() => {
-        this.exportData = false;
-      }, 500);
+      this.$emit("applyLayout");
     },
     clearStage() {
       let _this = this;
@@ -121,12 +163,12 @@ export default {
         } else if (newValue == "720P") {
           //this.$Message.success("720P");
           //this.$emit("setResolution", "720P");
-          this.zoom = 0.65;
+          this.zoom = 0.66666666;
           this.videoMag = 1.5;
         } else if (newValue == "1080P") {
           //this.$Message.success("1080P");
           //this.$emit("setResolution", "1080P");
-          this.zoom = 0.45;
+          this.zoom = 0.44444444;
           this.videoMag = 1.5 * 1.5;
         } else {
           //this.$emit("setResolution", "480P");
@@ -161,8 +203,8 @@ export default {
 
 <style lang="scss" scoped>
 .sidebar {
-  width: 240px;
-  min-width: 240px;
+  width: 280px;
+  min-width: 280px;
   height: 100%;
   min-height: 600px;
   display: flex;

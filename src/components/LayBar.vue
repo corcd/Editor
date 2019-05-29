@@ -2,7 +2,7 @@
   <div class="laybar">
     <Tabs size="small">
       <TabPane label="Layer">
-        <div class="container">
+        <div class="layer-container">
           <LayerPicker
             v-for="element in sortEles"
             :key="element.id"
@@ -28,7 +28,65 @@
         </div>
       </TabPane>
       <TabPane label="Layout">场景</TabPane>
-      <TabPane label="Animation">动画窗格</TabPane>
+      <TabPane label="Animation">
+        <div class="animation-container">
+          <Form :label-width="60">
+            <FormItem label="Animation:">
+              <Select v-model="elementSelected.animation" placeholder="animate.css">
+                <Option
+                  v-for="item in animateList"
+                  :key="item"
+                  :label="item"
+                  :value="item"
+                  clearable
+                ></Option>
+              </Select>
+            </FormItem>
+            <FormItem label="Animate:">
+              <Button style="width: 100%" @click="playAnimate">Play</Button>
+            </FormItem>
+            <FormItem label="Loop:">
+              <i-switch size="large" v-model="elementSelected.loop">
+                <span slot="open">ON</span>
+                <span slot="close">OFF</span>
+              </i-switch>
+            </FormItem>
+            <FormItem label="Duration:">
+              <Slider
+                v-model="elementSelected.duration"
+                :step="0.1"
+                :min="0.1"
+                :max="10"
+                show-input
+              ></Slider>
+            </FormItem>
+            <FormItem label="Delay:">
+              <Slider v-model="elementSelected.delay" :step="0.1" :min="0" :max="10"></Slider>
+            </FormItem>
+            <Divider>Marquee</Divider>
+            <FormItem label="Pattern:">
+              <RadioGroup
+                v-model="elementSelected.marquee_pattern"
+                @on-change="changeMarquee"
+                vertical
+              >
+                <Radio label="normal"></Radio>
+                <Radio label="once"></Radio>
+                <Radio label="loop"></Radio>
+              </RadioGroup>
+            </FormItem>
+            <FormItem label="Duration:">
+              <Slider
+                v-model="elementSelected.marquee_duration"
+                :step="0.5"
+                :min="0.5"
+                :max="10"
+                show-input
+              ></Slider>
+            </FormItem>
+          </Form>
+        </div>
+      </TabPane>
     </Tabs>
   </div>
 </template>
@@ -55,7 +113,84 @@ export default {
   data() {
     return {
       selected: false,
-      videoMag: 1
+      videoMag: 1,
+      animateList: [
+        "bounce",
+        "flash",
+        "pulse",
+        "rubberBand",
+        "shake",
+        "swing",
+        "tada",
+        "wobble",
+        "jello",
+        "bounceIn",
+        "bounceInDown",
+        "bounceInLeft",
+        "bounceInRight",
+        "bounceInUp",
+        "bounceOut",
+        "bounceOutDown",
+        "bounceOutLeft",
+        "bounceOutRight",
+        "bounceOutUp",
+        "fadeIn",
+        "fadeInDown",
+        "fadeInDownBig",
+        "fadeInLeft",
+        "fadeInLeftBig",
+        "fadeInRight",
+        "fadeInRightBig",
+        "fadeInUp",
+        "fadeInUpBig",
+        "fadeOut",
+        "fadeOutDown",
+        "fadeOutDownBig",
+        "fadeOutLeft",
+        "fadeOutLeftBig",
+        "fadeOutRight",
+        "fadeOutRightBig",
+        "fadeOutUp",
+        "fadeOutUpBig",
+        "flip",
+        "flipInX",
+        "flipInY",
+        "flipOutX",
+        "flipOutY",
+        "lightSpeedIn",
+        "lightSpeedOut",
+        "rotateIn",
+        "rotateInDownLeft",
+        "rotateInDownRight",
+        "rotateInUpLeft",
+        "rotateInUpRight",
+        "rotateOut",
+        "rotateOutDownLeft",
+        "rotateOutDownRight",
+        "rotateOutUpLeft",
+        "rotateOutUpRight",
+        "slideInUp",
+        "slideInDown",
+        "slideInLeft",
+        "slideInRight",
+        "slideOutUp",
+        "slideOutDown",
+        "slideOutLeft",
+        "slideOutRight",
+        "zoomIn",
+        "zoomInDown",
+        "zoomInLeft",
+        "zoomInRight",
+        "zoomInUp",
+        "zoomOut",
+        "zoomOutDown",
+        "zoomOutLeft",
+        "zoomOutRight",
+        "zoomOutUp",
+        "hinge",
+        "rollIn",
+        "rollOut"
+      ]
     };
   },
   computed: {
@@ -64,6 +199,39 @@ export default {
     }
   },
   methods: {
+    changeMarquee() {
+      if (this.elementSelected.marquee_pattern == "normal") {
+        this.$Message.warning("Marquee Cancel");
+      } else if (this.elementSelected.marquee_pattern == "once") {
+        this.$Message.success("Marquee Applied Once");
+        this.marquee(this.elementSelected, 10, false);
+      } else if (this.elementSelected.marquee_pattern == "loop") {
+        this.$Message.success("Marquee Applied Loop");
+        this.marquee(this.elementSelected, 10, true);
+      } else {
+        this.$Message.error("Marquee Error");
+      }
+    },
+    marquee(ele, delay, loop) {
+      ele.left = 1280;
+      let timer = setInterval(() => {
+        this.$nextTick(() => {
+          if (ele.left <= -ele.width) {
+            if (!loop) {
+              clearInterval(timer);
+              timer = null;
+            } else {
+              ele.left = 1280;
+            }
+          }
+          ele.left--;
+          this.animate = !this.animate;
+        });
+      }, delay);
+    },
+    playAnimate() {
+      this.elementSelected.playing = true;
+    },
     delElementSelected(ele) {
       this.$emit("delElementSelected", ele);
     },
@@ -120,9 +288,10 @@ export default {
         justify-content: flex-start;
         align-items: center;
 
-        .container {
+        .layer-container {
           width: 90%;
           margin-top: 10px;
+          padding: 2px;
           overflow-y: auto;
         }
 
@@ -132,6 +301,20 @@ export default {
           display: flex;
           justify-content: center;
           align-items: center;
+        }
+
+        .animation-container {
+          width: 90%;
+          margin-top: 10px;
+          padding: 2px;
+          overflow-y: auto;
+
+          .ivu-radio-group {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-start;
+          }
         }
       }
     }

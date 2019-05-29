@@ -6,15 +6,25 @@
       v-bind:class="[stageResolution == '480P' ? 'simpleCanvas':'',stageResolution == '720P' ? 'normalCanvas':'',stageResolution == '1080P' ? 'extendCanvas':'']"
     >
       <img
-        id="ele_stage"
+        id="ele_img_stage"
         class="showImg"
         alt="img"
         draggable="false"
-        v-for="element in elements"
+        v-for="element in filterOfImg"
         :key="element.id"
         :src="element.imgSrc"
         :style="{'top':element.top+'px','left':element.left+'px','width':element.width+'px','height':element.height+'px','opacity':(element.alpha/100.0),'z-index':element.index}"
       >
+      <section
+        class="showWord"
+        v-for="element in filterOfWord"
+        :key="element.id"
+        :style="{'top':element.top+'px','left':element.left+'px','z-index':element.index}"
+      >
+        <div :class="'animated'+ ' ' + element['animation']" :style="styleAnime(element)">
+          <div id="ele_word_stage" draggable="false" :style="styleBasic(element)">{{ element.text }}</div>
+        </div>
+      </section>
     </div>
   </div>
 </template>
@@ -82,7 +92,35 @@ export default {
   beforeDestroy() {
     //this.$socket.close();
   },
+  computed: {
+    filterOfImg() {
+      return this.elements.filter(item => item.type == "img");
+    },
+    filterOfWord() {
+      return this.elements.filter(item => item.type == "word");
+    }
+  },
   methods: {
+    styleAnime(ele) {
+      return {
+        animationIterationCount: ele["loop"] ? "infinite" : "initial",
+        animationDuration: ele["duration"] + "s",
+        animationDelay: ele["delay"] + "s"
+      };
+    },
+    styleBasic(ele) {
+      return {
+        width: ele["width"] + "px",
+        lineHeight: ele["lineHeight"],
+        color: ele["color"],
+        textAlign: ele["textAlign"],
+        fontSize: ele["fontSize"] + "px",
+        fontWeight: ele["fontWeight"],
+        "font-family": ele["fontFamily"],
+        opacity: ele["alpha"] / 100,
+        transform: "rotate(" + ele["transform"] + "deg" + ")"
+      };
+    }
     // setPosition() {
     //   let ele = document.getElementById("ele_stage");
     //   ele.style.top = this.currentTop + "px";
@@ -121,10 +159,19 @@ export default {
     //overflow: hidden;
     //z-index: 0;
 
-    img {
+    .showImg {
       margin: 0;
       padding: 0;
       position: absolute;
+    }
+
+    .showWord {
+      margin: 0;
+      padding: 0;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      position: relative;
+      user-select: none;
     }
   }
 }

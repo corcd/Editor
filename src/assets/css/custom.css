@@ -1,0 +1,13 @@
+@keyframes roll {
+    0% {
+        transform: translate(-1280px, 0)
+    }
+
+    100% {
+        transform: translate(1280px, 0)
+    }
+}
+
+.roll {
+    animation-name: roll;
+}

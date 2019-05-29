@@ -15,6 +15,7 @@
         :exportable="isExportable"
         @changeResolution="changeResolution"
         @changeSocketExport="changeSocketExport"
+        @applyLayout="updateData"
       ></SideBar>
       <div class="inside-container">
         <Button
@@ -31,7 +32,7 @@
           v-bind:style="{'zoom': zoom}"
         >
           <ImgElement
-            v-for="element in elements"
+            v-for="element in filterOfImg"
             :key="element.id"
             :resolution="resolution"
             :zoom="zoom"
@@ -41,6 +42,17 @@
             @clearElementSelected="clearElementSelected"
             @delElementSelected="delElementSelected"
           ></ImgElement>
+          <WordElement
+            v-for="element in filterOfWord"
+            :key="element.id"
+            :resolution="resolution"
+            :zoom="zoom"
+            :element="element"
+            :elementSelected="eleSelected"
+            @getElementSelected="getElementSelected"
+            @clearElementSelected="clearElementSelected"
+            @delElementSelected="delElementSelected"
+          ></WordElement>
         </div>
       </div>
       <LayBar
@@ -63,6 +75,7 @@
 
 <script>
 import "animate.css";
+import "../assets/css/custom.css"
 import { setInterval, clearInterval } from "timers";
 export default {
   name: "home",
@@ -92,6 +105,7 @@ export default {
       );
     }
   },
+  beforeCreate() {},
   created() {
     this.appid = this.$utils.parseUrl("appid");
     if (this.appid == null) {
@@ -141,7 +155,14 @@ export default {
     this.timer = null;
   },
   destroyed() {},
-  computed: {},
+  computed: {
+    filterOfImg() {
+      return this.elements.filter(item => item.type == "img");
+    },
+    filterOfWord() {
+      return this.elements.filter(item => item.type == "word");
+    }
+  },
   methods: {
     keyboard(event) {
       if (event.keyCode == 13) {
@@ -157,18 +178,46 @@ export default {
       if (this.isCanvasColorBlack) this.isCanvasColorBlack = false;
       else this.isCanvasColorBlack = true;
     },
-    elementAdd(url, type) {
-      let newObj = {
-        id: this.lastIndex,
-        width: 200,
-        height: 200,
-        top: 0,
-        left: 0,
-        type: type,
-        imgSrc: url,
-        alpha: 100,
-        index: 1
-      };
+    elementAdd(param, type) {
+      let newObj = {};
+      if (type == "img") {
+        newObj = {
+          id: this.lastIndex,
+          width: 200,
+          height: 200,
+          top: 0,
+          left: 0,
+          type: type,
+          imgSrc: param,
+          alpha: 100,
+          index: 1
+        };
+      } else if (type == "word") {
+        newObj = {
+          id: this.lastIndex,
+          width: 200,
+          top: 0,
+          left: 0,
+          lineHeight: 1.5,
+          type: type,
+          text: param,
+          color: "black",
+          textAlign: "left",
+          fontSize: 28,
+          fontWeight: "normal",
+          fontFamily: "Helvetica",
+          alpha: 100,
+          index: 1,
+          playing: true,
+          tranform: 0,
+          animation: "",
+          loop: false,
+          duration: 1,
+          delay: 0,
+          marquee_pattern: "normal",
+          marquee_duration: 1
+        };
+      }
       this.lastIndex++;
       //this.$store.commit("indexIncrement", this.lastIndex);
       //console.log(newObj);
@@ -291,13 +340,13 @@ export default {
 .normalCanvas {
   width: 1280px;
   height: 720px;
-  zoom: 0.65;
+  zoom: 0.66666666;
 }
 
 .extendCanvas {
   width: 1920px;
   height: 1080px;
-  zoom: 0.45;
+  zoom: 0.44444444;
 }
 
 .home {

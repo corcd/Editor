@@ -9,6 +9,13 @@
       <h3>UserId: {{appid}}</h3>
     </div>
     <div class="btn-group">
+      <Poptip placement="bottom">
+        <Button type="default" class="btn-new-word">New Text</Button>
+        <div class="api" slot="content">
+          <Input v-model="newText" placeholder="Enter something..." style="width: 150px"/>
+          <Button type="default" class="btn-new-word-confirm" @click="addWord">Add</Button>
+        </div>
+      </Poptip>¸
       <Upload
         :action="domain"
         :http-request="upqiniu"
@@ -36,6 +43,7 @@ export default {
   data() {
     return {
       imageUrl: "",
+      newText: "",
       token: {},
       // 七牛云的上传地址，根据自己所在地区选择，我这里是华南区
       domain: "https://upload.qiniup.com",
@@ -81,6 +89,14 @@ export default {
             this.$Message.error("Upload Error");
           });
       });
+    },
+    addWord() {
+      //this.newText = "你好，hello";
+      if (this.newText != "") {
+        this.$emit("elementAdd", this.newText, "word");
+      } else {
+        this.$Message.warning("Empty Input");
+      }
     },
     handleFormatError(file) {
       this.$Notice.warning({
@@ -152,6 +168,14 @@ export default {
     display: flex;
     justify-content: flex-start;
     align-items: center;
+
+    .btn-new-word {
+      margin-right: 20px;
+    }
+
+    .btn-new-word-confirm {
+      margin-left: 10px;
+    }
 
     .ivu-divider {
       margin-right: 48px;

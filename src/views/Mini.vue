@@ -2,6 +2,8 @@
   <div
     class="mini home"
     v-bind:class="[resolution == '480P' ? 'simpleFrame':'',resolution == '720P' ? 'normalFrame':'',resolution == '1080P' ? 'extendFrame':'']"
+    @mouseover="toolsShow"
+    @mouseout="toolsHide"
   >
     <div class="container inside-container">
       <div
@@ -19,10 +21,18 @@
           @clearElementSelected="clearElementSelected"
           @delElementSelected="delElementSelected"
         ></ImgElement>
+        <WordElement
+          :resolution="resolution"
+          :zoom="zoom"
+          :elementSelected="eleSelected"
+          @getElementSelected="getElementSelected"
+          @clearElementSelected="clearElementSelected"
+          @delElementSelected="delElementSelected"
+        ></WordElement>
       </div>
-      <div class="topbar">
+      <div class="topbar" v-show="isToolsShow">
         <div class="btn-group">
-          <Button type="primary" shape="circle" class="btn-trigger" @click="triggerBg" ghost>Tigger</Button>
+          <Button type="default" shape="circle" class="btn-trigger" @click="triggerBg">Tigger</Button>
           <Upload
             :action="domain"
             :http-request="upqiniu"
@@ -32,23 +42,23 @@
             :on-exceeded-size="handleMaxSize"
             :before-upload="handleBeforeUpload"
           >
-            <Button type="primary" shape="circle" icon="ios-cloud-upload-outline" ghost>Upload files</Button>
+            <Button type="default" shape="circle" icon="ios-cloud-upload-outline">Upload files</Button>
           </Upload>
-          <Button type="primary" shape="circle" class="btn-save" @click="exportJSON" ghost>Save</Button>
+          <Button type="default" shape="circle" class="btn-save" @click="exportJSON">Save</Button>
         </div>
       </div>
-      <div class="bottombar">
+      <div class="bottombar" v-show="isToolsShow">
         <div class="btn-group">
-          <Button type="primary" shape="circle" class="btn-trigger" @click="updateData" ghost>Apply</Button>
+          <Button type="default" shape="circle" class="btn-trigger" @click="updateData">Apply</Button>
           <Select v-model="selectData" placement="top-start">
-            <Option value="480P">480P (853*480)</Option>
-            <Option value="720P">720P (1280*720)</Option>
-            <Option value="1080P">1080P (1920*1080)</Option>
+            <Option value="480P">480P</Option>
+            <Option value="720P">720P</Option>
+            <Option value="1080P">1080P</Option>
           </Select>
         </div>
       </div>
-      <div class="rightbar">
-        <Button type="primary" shape="circle" class="btn-up" @click="indexUpward" ghost>Up</Button>
+      <div class="rightbar" v-show="isToolsShow">
+        <Button type="default" shape="circle" class="btn-up" @click="indexUpward">Up</Button>
         <LayerPicker
           v-for="element in sortEles"
           :key="element.id"
@@ -58,7 +68,7 @@
           @clearElementSelected="clearElementSelected"
           @delElementSelected="delElementSelected"
         ></LayerPicker>
-        <Button type="primary" shape="circle" class="btn-down" @click="indexDownward" ghost>Down</Button>
+        <Button type="default" shape="circle" class="btn-down" @click="indexDownward">Down</Button>
       </div>
     </div>
   </div>
@@ -73,6 +83,7 @@ function sortByKey(array, key) {
     return x > y ? -1 : x < y ? 1 : 0;
   });
 }
+
 import "animate.css";
 export default {
   name: "mini",
@@ -80,9 +91,10 @@ export default {
     return {
       appid: "",
       isEditorColorBlack: false,
+      isToolsShow: false,
       selectData: "720P",
       resolution: "720P",
-      zoom: 0.65,
+      zoom: 0.66666666,
       mag: 1,
       data: {},
       elements: [],
@@ -143,6 +155,12 @@ export default {
     }
   },
   methods: {
+    toolsShow() {
+      this.isToolsShow = true;
+    },
+    toolsHide() {
+      this.isToolsShow = false;
+    },
     indexUpward() {
       let ele = this.eleSelected;
       if (ele.index >= 1) ele.index++;
@@ -321,24 +339,24 @@ export default {
     selectData: {
       handler(newValue, oldValue) {
         // let html = document.getElementsByTagName("html")[0];
-        // if (newValue == "480P") {
-        //   html.style.width = "853px";
-        //   html.style.height = "480px";
-        //   this.zoom = 1;
-        // } else if (newValue == "720P") {
-        //   html.style.width = "1280px";
-        //   html.style.height = "720px";
-        //   this.zoom = 0.65;
-        // } else if (newValue == "1080P") {
-        //   html.style.width = "1920px";
-        //   html.style.height = "1080px";
-        //   this.zoom = 0.45;
-        // } else {
-        //   html.style.width = "853px";
-        //   html.style.height = "480px";
-        //   this.zoom = 1;
-        //   this.videoMag = 1;
-        // }
+        if (newValue == "480P") {
+          //   html.style.width = "853px";
+          //   html.style.height = "480px";
+          this.zoom = 1;
+        } else if (newValue == "720P") {
+          //   html.style.width = "1280px";
+          //   html.style.height = "720px";
+          this.zoom = 0.66666666;
+        } else if (newValue == "1080P") {
+          //   html.style.width = "1920px";
+          //   html.style.height = "1080px";
+          this.zoom = 0.44444444;
+        } else {
+          //   html.style.width = "853px";
+          //   html.style.height = "480px";
+          this.zoom = 1;
+          //   this.videoMag = 1;
+        }
         this.resolution = newValue;
       },
       immediate: true
@@ -358,13 +376,13 @@ export default {
 }
 
 .normalFrame {
-  width: 1280px * 0.65;
-  height: 720px * 0.65;
+  width: 1280px * 0.66666666;
+  height: 720px * 0.66666666;
 }
 
 .extendFrame {
-  width: 1920px * 0.45;
-  height: 1080px * 0.45;
+  width: 1920px * 0.44444444;
+  height: 1080px * 0.44444444;
 }
 
 .simpleCanvas {
@@ -382,7 +400,7 @@ export default {
 .extendCanvas {
   width: 1920px;
   height: 1080px;
-  zoom: 0.45;
+  zoom: 0.44444444;
 }
 
 .mini {
@@ -410,7 +428,7 @@ export default {
     }
 
     .topbar {
-      width: 100%;
+      //width: 100%;
       min-height: 35px;
       margin: 5px;
       position: absolute;
@@ -432,13 +450,14 @@ export default {
         button {
           margin-right: 5px;
           margin-left: 5px;
+          border: 0;
           z-index: 9999;
         }
       }
     }
 
     .bottombar {
-      width: 100%;
+      //width: 100%;
       min-height: 35px;
       margin: 5px;
       position: absolute;
@@ -454,12 +473,14 @@ export default {
         button {
           margin-right: 5px;
           margin-left: 5px;
+          border: 0;
           z-index: 9999;
         }
 
         .ivu-select {
-          width: 20%;
+          width: 80px;
           background-color: transparent;
+          border: 0;
           z-index: 9999;
 
           .ivu-select-selection {
@@ -471,7 +492,7 @@ export default {
 
     .rightbar {
       min-width: 150px;
-      height: 100%;
+      //height: 100%;
       margin: 5px;
       position: absolute;
       right: 0;
@@ -482,6 +503,11 @@ export default {
 
       .btn-up {
         margin-bottom: 10px;
+        border: 0;
+      }
+
+      .btn-down {
+        border: 0;
       }
     }
   }
