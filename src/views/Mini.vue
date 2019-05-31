@@ -11,7 +11,7 @@
         v-bind:class="[resolution == '480P' ? 'simpleCanvas':'',resolution == '720P' ? 'normalCanvas':'',resolution == '1080P' ? 'extendCanvas':'',isEditorColorBlack ? 'easyeditor':'']"
       >
         <ImgElement
-          v-for="element in elements"
+          v-for="element in filterOfImg"
           :key="element.id"
           :resolution="resolution"
           :zoom="zoom"
@@ -22,13 +22,29 @@
           @delElementSelected="delElementSelected"
         ></ImgElement>
         <WordElement
+          v-for="element in filterOfWord"
+          :key="element.id"
           :resolution="resolution"
           :zoom="zoom"
+          :element="element"
           :elementSelected="eleSelected"
+          :marqueeStatus="element.marquee_pattern"
+          :marqueeDuration="element.marquee_duration"
           @getElementSelected="getElementSelected"
           @clearElementSelected="clearElementSelected"
           @delElementSelected="delElementSelected"
         ></WordElement>
+        <LayoutItem
+          v-for="element in filterOfLayout"
+          :key="element.id"
+          :resolution="resolution"
+          :zoom="zoom"
+          :element="element"
+          :elementSelected="eleSelected"
+          @getElementSelected="getElementSelected"
+          @clearElementSelected="clearElementSelected"
+          @delElementSelected="delElementSelected"
+        ></LayoutItem>
       </div>
       <div class="topbar" v-show="isToolsShow">
         <div class="btn-group">
@@ -44,12 +60,29 @@
           >
             <Button type="default" shape="circle" icon="ios-cloud-upload-outline">Upload files</Button>
           </Upload>
-          <Button type="default" shape="circle" class="btn-save" @click="exportJSON">Save</Button>
+          <Poptip placement="bottom">
+            <Button type="default" shape="circle" class="btn-new-word">New Text</Button>
+            <div class="api" slot="content">
+              <Input v-model="newText" placeholder="Enter something..." style="width: 150px"/>
+              <Button
+                type="default"
+                class="btn-new-word-confirm"
+                @click="elementAdd(newText, 'word')"
+              >Add</Button>
+            </div>
+          </Poptip>¸
+          <Button
+            type="default"
+            shape="circle"
+            class="btn-new-sub"
+            @click="elementAdd('default', 'layout')"
+          >New Sub</Button>
         </div>
       </div>
       <div class="bottombar" v-show="isToolsShow">
         <div class="btn-group">
           <Button type="default" shape="circle" class="btn-trigger" @click="updateData">Apply</Button>
+          <Button type="default" shape="circle" class="btn-save" @click="exportJSON">Save</Button>
           <Select v-model="selectData" placement="top-start">
             <Option value="480P">480P</Option>
             <Option value="720P">720P</Option>
@@ -100,6 +133,7 @@ export default {
       elements: [],
       eleSelected: {},
       lastIndex: 0,
+      newText: "",
       imageUrl: "",
       token: {},
       // 七牛云的上传地址，根据自己所在地区选择，我这里是华南区
@@ -152,6 +186,15 @@ export default {
   computed: {
     sortEles: function() {
       return sortByKey(this.elements, "index");
+    },
+    filterOfImg() {
+      return this.elements.filter(item => item.type == "img");
+    },
+    filterOfWord() {
+      return this.elements.filter(item => item.type == "word");
+    },
+    filterOfLayout() {
+      return this.elements.filter(item => item.type == "layout");
     }
   },
   methods: {
@@ -187,7 +230,7 @@ export default {
       const keyname = "images-oss_" + Date.parse(new Date()) + suffix; // 组成新文件名
 
       // 从后端获取上传凭证token
-      this.$axios.get("http://139.196.92.199:3006/token").then(res => {
+      this.$axios.get("https://editor.guangdianyun.tv:3006/token").then(res => {
         console.log(res);
         const formdata = new FormData();
         formdata.append("file", file);
@@ -241,19 +284,126 @@ export default {
       if (this.isEditorColorBlack) this.isEditorColorBlack = false;
       else this.isEditorColorBlack = true;
     },
-    elementAdd(url, type) {
-      let newObj = {
-        id: this.lastIndex,
-        width: 200,
-        height: 200,
-        top: 0,
-        left: 0,
-        type: type,
-        imgSrc: url,
-        alpha: 100,
-        index: 1
-      };
-      this.lastIndex++;
+    elementAdd(param, type) {
+      let newObj = {};
+      if (param != "" && type == "img") {
+        newObj = {
+          id: this.lastIndex,
+          width: 200,
+          height: 200,
+          top: 0,
+          left: 0,
+          type: type,
+          imgSrc: param,
+          alpha: 100,
+          index: 1
+        };
+        this.lastIndex++;
+      } else if (type == "word" && param != "") {
+        newObj = {
+          id: this.lastIndex,
+          width: 200,
+          top: 0,
+          left: 0,
+          lineHeight: 1.5,
+          type: type,
+          text: param,
+          color: "#000000",
+          textAlign: "left",
+          fontSize: 28,
+          fontWeight: "normal",
+          fontFamily: "Helvetica",
+          alpha: 100,
+          index: 1,
+          playing: true,
+          tranform: 0,
+          animation: "",
+          loop: false,
+          duration: 1,
+          delay: 0,
+          marquee_pattern: "normal",
+          marquee_duration: 10
+        };
+        this.lastIndex++;
+      } else if (param == "default" && type == "layout") {
+        newObj = {
+          id: this.lastIndex,
+          width: 980,
+          height: 177,
+          top: 550,
+          left: 22,
+          type: "layout",
+          alpha: 100,
+          index: 2,
+          children: [
+            {
+              id: this.lastIndex + 1,
+              width: 815,
+              height: 135,
+              top: -2,
+              left: 0,
+              type: "img",
+              imgSrc:
+                "http://prvz33yaw.bkt.clouddn.com/%E6%A0%87%E9%A2%98%E6%A0%8F.png",
+              alpha: 100,
+              index: 3,
+              duration: 0.1,
+              marquee_duration: 1
+            },
+            {
+              id: this.lastIndex + 2,
+              width: 158,
+              top: 34,
+              left: 74,
+              lineHeight: 1.5,
+              type: "word",
+              text: "组件测试",
+              color: "#FFFFFF",
+              textAlign: "left",
+              fontSize: "36",
+              fontWeight: "bold",
+              fontFamily: "Helvetica",
+              alpha: 100,
+              index: 4,
+              playing: true,
+              tranform: 0,
+              animation: "",
+              loop: false,
+              duration: 1,
+              delay: 0,
+              marquee_pattern: "normal",
+              marquee_duration: 10
+            },
+            {
+              id: this.lastIndex + 3,
+              width: 200,
+              top: 83,
+              left: 76,
+              lineHeight: 1.5,
+              type: "word",
+              text: "组件测试副标题",
+              color: "#FFFFFF",
+              textAlign: "left",
+              fontSize: "24",
+              fontWeight: "normal",
+              fontFamily: "Helvetica",
+              alpha: 100,
+              index: 4,
+              playing: true,
+              tranform: 0,
+              animation: "",
+              loop: false,
+              duration: 1,
+              delay: 0,
+              marquee_pattern: "normal",
+              marquee_duration: 10
+            }
+          ],
+          duration: 0.1,
+          marquee_duration: 1
+        };
+        this.lastIndex = this.lastIndex + 4;
+      }
       this.elements.push(newObj);
     },
     delElementSelected(ele) {
@@ -318,7 +468,7 @@ export default {
       //console.log(_this.$store.state);
       this.$axios
         .post(
-          "http://139.196.92.199:3006/data",
+          "https://editor.guangdianyun.tv:3006/data",
           JSON.parse(JSON.stringify(_this.$store.state))
         )
         .then(function(response) {
@@ -445,6 +595,10 @@ export default {
           display: flex;
           justify-content: center;
           align-items: center;
+        }
+
+        .btn-new-word-confirm {
+          margin-left: 10px;
         }
 
         button {

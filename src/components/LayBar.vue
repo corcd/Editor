@@ -27,7 +27,17 @@
           </div>
         </div>
       </TabPane>
-      <TabPane label="Layout">场景</TabPane>
+      <TabPane label="Layout">
+        <div class="layout-container">
+          <Button type="primary" style="width: 90%">Custom</Button>
+          <LayoutPicker
+            :imgSrc="'http://prvz33yaw.bkt.clouddn.com/%E6%A0%87%E9%A2%98%E6%A0%8F.png'"
+            :title="'默认标题'"
+            :type="'default'"
+            @elementAdd="elementAdd"
+          ></LayoutPicker>
+        </div>
+      </TabPane>
       <TabPane label="Animation">
         <div class="animation-container">
           <Form :label-width="60">
@@ -75,12 +85,15 @@
                 <Radio label="loop"></Radio>
               </RadioGroup>
             </FormItem>
-            <FormItem label="Duration:">
+            <FormItem
+              label="Duration:"
+              v-show="elementSelected.marquee_pattern == 'once' || elementSelected.marquee_pattern == 'loop'"
+            >
               <Slider
                 v-model="elementSelected.marquee_duration"
-                :step="0.5"
-                :min="0.5"
-                :max="10"
+                :step="1"
+                :min="1"
+                :max="20"
                 show-input
               ></Slider>
             </FormItem>
@@ -105,8 +118,7 @@ export default {
   name: "LayBar",
   props: {
     elements: {
-      type: Array,
-      default: null
+      type: Array
     },
     elementSelected: Object
   },
@@ -201,36 +213,22 @@ export default {
   methods: {
     changeMarquee() {
       if (this.elementSelected.marquee_pattern == "normal") {
-        this.$Message.warning("Marquee Cancel");
+        //this.$Message.warning("Marquee Cancel");
       } else if (this.elementSelected.marquee_pattern == "once") {
         this.$Message.success("Marquee Applied Once");
-        this.marquee(this.elementSelected, 10, false);
+        //this.marquee(this.elementSelected, 10, false);
       } else if (this.elementSelected.marquee_pattern == "loop") {
         this.$Message.success("Marquee Applied Loop");
-        this.marquee(this.elementSelected, 10, true);
+        //this.marquee(this.elementSelected, 10, true);
       } else {
         this.$Message.error("Marquee Error");
       }
     },
-    marquee(ele, delay, loop) {
-      ele.left = 1280;
-      let timer = setInterval(() => {
-        this.$nextTick(() => {
-          if (ele.left <= -ele.width) {
-            if (!loop) {
-              clearInterval(timer);
-              timer = null;
-            } else {
-              ele.left = 1280;
-            }
-          }
-          ele.left--;
-          this.animate = !this.animate;
-        });
-      }, delay);
-    },
     playAnimate() {
       this.elementSelected.playing = true;
+    },
+    elementAdd(param, type) {
+      this.$emit("elementAdd", param, type);
     },
     delElementSelected(ele) {
       this.$emit("delElementSelected", ele);
@@ -272,27 +270,31 @@ export default {
     width: 100%;
     height: 100%;
 
-    .ivu-tabs-bar {
+    .ivu-tabs-bar[style] {
       width: 100%;
+      margin-bottom: 10px !important;
     }
 
     .ivu-tabs-content {
       width: 100%;
       height: 100%;
+      //overflow-y: auto;
 
       .ivu-tabs-tabpane {
         width: 100%;
         height: 100%;
+        //max-height: 70vh;
+        //margin-top: 10px;
         display: flex;
         flex-direction: column;
         justify-content: flex-start;
         align-items: center;
+        overflow-y: auto;
 
         .layer-container {
           width: 90%;
-          margin-top: 10px;
+          margin-top: 0px;
           padding: 2px;
-          overflow-y: auto;
         }
 
         .control {
@@ -303,17 +305,27 @@ export default {
           align-items: center;
         }
 
+        .layout-container {
+          width: 90%;
+          margin-top: 10px;
+          overflow-y: auto;
+        }
+
         .animation-container {
           width: 90%;
           margin-top: 10px;
           padding: 2px;
           overflow-y: auto;
 
-          .ivu-radio-group {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: flex-start;
+          form {
+            width: 100%;
+
+            .ivu-radio-group {
+              display: flex;
+              flex-direction: column;
+              justify-content: center;
+              align-items: flex-start;
+            }
           }
         }
       }

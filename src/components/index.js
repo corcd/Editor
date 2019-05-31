@@ -6,6 +6,8 @@ import Operate from "./Operate";
 import ImgElement from "./Element/ImgElement";
 import WordElement from "./Element/WordElement";
 import LayerPicker from "./LayerPicker";
+import LayoutPicker from "./LayoutPicker";
+import LayoutItem from "./LayoutItem";
 import Editor from "./Editor";
 
 const components = {
@@ -17,6 +19,8 @@ const components = {
   ImgElement,
   WordElement,
   LayerPicker,
+  LayoutPicker,
+  LayoutItem,
   Editor
 };
 

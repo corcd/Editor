@@ -1,6 +1,6 @@
 <template>
   <div class="sidebar">
-    <Form :label-width="60">
+    <Form :label-width="60" @submit.native.prevent>
       <Divider>Profile</Divider>
       <FormItem label="Source:" v-show="elementSelected.type=='img'">
         <Input v-model="elementSelected.imgSrc" placeholder="N/A" readonly></Input>
@@ -21,7 +21,7 @@
         </a>
       </div>
       <FormItem label="Height:" style="margin-top: 0 !important;">
-        <Input v-model="elementSelected.height" placeholder="0">
+        <Input v-model="elementSelected.height" placeholder="0" :disabled="elementSelected.type=='word'">
           <span slot="append">px</span>
         </Input>
       </FormItem>
@@ -40,14 +40,19 @@
           <Option v-for="item in fontFamily" :key="item" :label="item" :value="item"></Option>
         </Select>
       </FormItem>
+      <FormItem label="Font:" v-if="elementSelected.type=='word'">
+        <ColorPicker v-model="elementSelected.color" style="float: left" recommend></ColorPicker>
+      </FormItem>
       <FormItem label="FontSize:" v-show="elementSelected.type=='word'">
         <Input v-model="elementSelected.fontSize" placeholder="0">
-          <span slot="append">px</span>
+          <Button slot="prepend" icon="md-remove"></Button>
+          <Button slot="append" icon="md-add"></Button>
         </Input>
       </FormItem>
       <FormItem label="LineHeight:" v-show="elementSelected.type=='word'">
         <Input v-model="elementSelected.lineHeight" placeholder="0">
-          <span slot="append">px</span>
+          <Button slot="prepend" icon="md-remove"></Button>
+          <Button slot="append" icon="md-add"></Button>
         </Input>
       </FormItem>
       <FormItem label="FontWeight:" v-show="elementSelected.type=='word'">
@@ -91,8 +96,7 @@ export default {
   props: {
     appid: String,
     elementSelected: {
-      type: Object,
-      default: null
+      type: Object
     },
     exportable: {
       type: Boolean,
@@ -119,18 +123,15 @@ export default {
       switchStatus: false
     };
   },
-  created() {
-    if (this.elementSelected.lineWeight == "bold") this.switchStatus = true;
-    else this.switchStatus = false;
-  },
+  created() {},
   methods: {
     changeLineWeight(status) {
       if (status) {
-        this.elementSelected.lineWeight = "bold";
+        this.elementSelected.fontWeight = "bold";
       } else {
-        this.elementSelected.lineWeight = "normal";
+        this.elementSelected.fontWeight = "normal";
       }
-      console.log(this.elementSelected.lineWeight);
+      //console.log(this.elementSelected.lineWeight);
     },
     changeProportional() {
       if (this.isProportional) this.isProportional = false;
@@ -145,7 +146,7 @@ export default {
       this.exportData = false;
 
       this.$axios
-        .post("http://139.196.92.199:3006/clear", { appid: this.appid })
+        .post("https://editor.guangdianyun.tv:3006/clear", { appid: this.appid })
         .then()
         .catch(err => {
           _this.$Message.error("Stage Error");
@@ -153,6 +154,14 @@ export default {
     }
   },
   watch: {
+    "elementSelected.fontWeight": {
+      handler(newValue, oldValue) {
+        if (newValue == "bold") this.switchStatus = true;
+        else this.switchStatus = false;
+      },
+      deep: true,
+      immediate: true
+    },
     selectData: {
       handler(newValue, oldValue) {
         if (newValue == "480P") {

@@ -15,7 +15,7 @@
         :exportable="isExportable"
         @changeResolution="changeResolution"
         @changeSocketExport="changeSocketExport"
-        @applyLayout="updateData"
+        @applyLayout="updateDataOnce"
       ></SideBar>
       <div class="inside-container">
         <Button
@@ -49,15 +49,29 @@
             :zoom="zoom"
             :element="element"
             :elementSelected="eleSelected"
+            :marqueeStatus="element.marquee_pattern"
+            :marqueeDuration="element.marquee_duration"
             @getElementSelected="getElementSelected"
             @clearElementSelected="clearElementSelected"
             @delElementSelected="delElementSelected"
           ></WordElement>
+          <LayoutItem
+            v-for="element in filterOfLayout"
+            :key="element.id"
+            :resolution="resolution"
+            :zoom="zoom"
+            :element="element"
+            :elementSelected="eleSelected"
+            @getElementSelected="getElementSelected"
+            @clearElementSelected="clearElementSelected"
+            @delElementSelected="delElementSelected"
+          ></LayoutItem>
         </div>
       </div>
       <LayBar
         :elements="elements"
         :elementSelected="eleSelected"
+        @elementAdd="elementAdd"
         @getElementSelected="getElementSelected"
         @clearElementSelected="clearElementSelected"
         @delElementSelected="delElementSelected"
@@ -75,7 +89,7 @@
 
 <script>
 import "animate.css";
-import "../assets/css/custom.css"
+import "../assets/css/custom.css";
 import { setInterval, clearInterval } from "timers";
 export default {
   name: "home",
@@ -161,6 +175,9 @@ export default {
     },
     filterOfWord() {
       return this.elements.filter(item => item.type == "word");
+    },
+    filterOfLayout() {
+      return this.elements.filter(item => item.type == "layout");
     }
   },
   methods: {
@@ -181,16 +198,25 @@ export default {
     elementAdd(param, type) {
       let newObj = {};
       if (type == "img") {
-        newObj = {
-          id: this.lastIndex,
-          width: 200,
-          height: 200,
-          top: 0,
-          left: 0,
-          type: type,
-          imgSrc: param,
-          alpha: 100,
-          index: 1
+        let image = new Image();
+        image.src = param;
+        image.onload = () => {
+          newObj = {
+            id: this.lastIndex,
+            width: image.width,
+            height: image.height,
+            top: 0,
+            left: 0,
+            title: "",
+            type: type,
+            imgSrc: param,
+            alpha: 100,
+            index: 1,
+            visible: true
+          };
+          this.lastIndex++;
+          this.elements.push(newObj);
+          image = null;
         };
       } else if (type == "word") {
         newObj = {
@@ -198,16 +224,18 @@ export default {
           width: 200,
           top: 0,
           left: 0,
+          title: "",
           lineHeight: 1.5,
           type: type,
           text: param,
-          color: "black",
+          color: "#000000",
           textAlign: "left",
           fontSize: 28,
           fontWeight: "normal",
           fontFamily: "Helvetica",
           alpha: 100,
           index: 1,
+          visible: true,
           playing: true,
           tranform: 0,
           animation: "",
@@ -215,13 +243,102 @@ export default {
           duration: 1,
           delay: 0,
           marquee_pattern: "normal",
+          marquee_duration: 10
+        };
+        this.lastIndex++;
+        this.elements.push(newObj);
+      } else if (type == "layout") {
+        newObj = {
+          id: this.lastIndex,
+          width: 980,
+          height: 177,
+          top: 550,
+          left: 22,
+          title: "",
+          type: "layout",
+          alpha: 100,
+          index: 2,
+          locked: true,
+          visible: true,
+          children: [
+            {
+              id: this.lastIndex + 1,
+              width: 815,
+              height: 135,
+              top: -2,
+              left: 0,
+              title: "",
+              type: "img",
+              imgSrc:
+                "http://prvz33yaw.bkt.clouddn.com/%E6%A0%87%E9%A2%98%E6%A0%8F.png",
+              alpha: 100,
+              index: 3,
+              visible: true,
+              duration: 0.1,
+              marquee_duration: 1
+            },
+            {
+              id: this.lastIndex + 2,
+              width: 158,
+              top: 34,
+              left: 74,
+              title: "",
+              lineHeight: 1.5,
+              type: "word",
+              text: "组件测试",
+              color: "#FFFFFF",
+              textAlign: "left",
+              fontSize: "36",
+              fontWeight: "bold",
+              fontFamily: "Helvetica",
+              alpha: 100,
+              index: 4,
+              visible: true,
+              playing: true,
+              tranform: 0,
+              animation: "",
+              loop: false,
+              duration: 1,
+              delay: 0,
+              marquee_pattern: "normal",
+              marquee_duration: 10
+            },
+            {
+              id: this.lastIndex + 3,
+              width: 200,
+              top: 83,
+              left: 76,
+              title: "",
+              lineHeight: 1.5,
+              type: "word",
+              text: "组件测试副标题",
+              color: "#FFFFFF",
+              textAlign: "left",
+              fontSize: "24",
+              fontWeight: "normal",
+              fontFamily: "Helvetica",
+              alpha: 100,
+              index: 4,
+              visible: true,
+              playing: true,
+              tranform: 0,
+              animation: "",
+              loop: false,
+              duration: 1,
+              delay: 0,
+              marquee_pattern: "normal",
+              marquee_duration: 10
+            }
+          ],
+          duration: 0.1,
           marquee_duration: 1
         };
+        this.lastIndex = this.lastIndex + 4;
+        this.elements.push(newObj);
       }
-      this.lastIndex++;
+
       //this.$store.commit("indexIncrement", this.lastIndex);
       //console.log(newObj);
-      this.elements.push(newObj);
       //this.$Message.success("New Object");
       //this.$store.dispatch("addElements", newObj);
       //this.lastIndex = this.$store.state.lastIndex;
@@ -285,6 +402,17 @@ export default {
         });
       }
     },
+    updateDataOnce() {
+      let socketData = {
+        Resolution: this.resolution,
+        Mag: this.mag,
+        Objs: this.elements
+      };
+      this.$socket.emit("sendMsg", {
+        appid: this.appid,
+        data: socketData
+      });
+    },
     exportJSON(type) {
       this.$Loading.start();
       console.log(this.elements);
@@ -300,7 +428,7 @@ export default {
       console.log(_this.$store.state);
       this.$axios
         .post(
-          "http://139.196.92.199:3006/data",
+          "https://editor.guangdianyun.tv:3006/data",
           JSON.parse(JSON.stringify(_this.$store.state))
         )
         .then(function(response) {

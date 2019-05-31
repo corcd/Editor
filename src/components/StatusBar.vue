@@ -70,7 +70,7 @@ export default {
       const keyname = "images-oss_" + Date.parse(new Date()) + suffix; // 组成新文件名
 
       // 从后端获取上传凭证token
-      this.$axios.get("http://139.196.92.199:3006/token").then(res => {
+      this.$axios.get("https://editor.guangdianyun.tv:3006/token").then(res => {
         console.log(res);
         const formdata = new FormData();
         formdata.append("file", file);

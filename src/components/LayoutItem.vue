@@ -1,40 +1,55 @@
 <template>
   <div
-    class="wrap"
+    class="layoutitem"
     v-show="element.visible"
-    :style="{'top':element.top+'px','left':element.left+'px','z-index':element.index}"
+    :style="{'top':element.top+'px','left':element.left+'px','width':element.width+'px','height':element.height+'px','z-index':element.index}"
     :tabindex="element.index"
-    @click="showEditor"
-    @mousedown="mousedown"
+    @click.stop="showEditor"
+    @mousedown.stop="mousedown"
     @mouseup="mouseup"
     @keydown="keyboard($event)"
   >
-    <img
-      v-if="element.type==='img'"
-      @dragstart="dragstart"
-      :src="element.imgSrc"
-      :style="{'width':element.width+'px','height':element.height+'px','opacity':(element.alpha/100.0)}"
-    >
-    <!-- <video v-if="fileType==='video'" @dragstart="dragstart" :src="imgSrc"/> -->
+    <ImgElement
+      v-for="item in filterOfImg"
+      :key="item.id"
+      :resolution="resolution"
+      :zoom="zoom"
+      :locked="locked"
+      :element="item"
+      :elementSelected="elementSelected"
+      @getElementSelected="getElementSelected"
+      @clearElementSelected="clearElementSelected"
+      @delElementSelected="delElementSelected"
+    ></ImgElement>
+    <WordElement
+      v-for="item in filterOfWord"
+      :key="item.id"
+      :resolution="resolution"
+      :zoom="zoom"
+      :locked="locked"
+      :element="item"
+      :elementSelected="elementSelected"
+      :marqueeStatus="item.marquee_pattern"
+      :marqueeDuration="item.marquee_duration"
+      @getElementSelected="getElementSelected"
+      @clearElementSelected="clearElementSelected"
+      @delElementSelected="delElementSelected"
+    ></WordElement>
     <Operate
       v-show="(element.id == elementSelected.id)"
       :element="element"
       :zoom="zoom"
-      :objtype="'img'"
+      :objtype="'layout'"
     />
   </div>
 </template>
 
 <script>
 export default {
-  name: "ImgElement",
+  name: "LayoutItem",
   props: {
     resolution: String,
     zoom: Number,
-    locked: {
-      type: Boolean,
-      default: false
-    },
     element: {
       type: Object,
       require: true
@@ -45,6 +60,7 @@ export default {
   },
   data() {
     return {
+      locked: false,
       left: 0,
       top: 0,
       width: 0,
@@ -52,9 +68,16 @@ export default {
       currentX: 0,
       currentY: 0,
       flag: false,
-      scaleFlag: false,
-      direction: ""
+      scaleFlag: false
     };
+  },
+  computed: {
+    filterOfImg() {
+      return this.element["children"].filter(item => item.type == "img");
+    },
+    filterOfWord() {
+      return this.element["children"].filter(item => item.type == "word");
+    }
   },
   methods: {
     keyboard(event) {
@@ -86,13 +109,12 @@ export default {
       this.$emit("delElementSelected", ele);
     },
     showEditor() {
-      if (this.locked == false) {
-        event.stopPropagation();
-        let ele = this.element;
-        this.$emit("getElementSelected", ele);
-      }
-
+      //this.$Message.error("Click Layout");
+      let ele = this.element;
+      //ele.edit = true;
+      this.$emit("getElementSelected", ele);
       let click = () => {
+        //ele.edit = false;
         this.$emit("clearElementSelected");
         document
           .querySelector(".inside-container")
@@ -121,50 +143,66 @@ export default {
       };
     },
     mousedown(e) {
-      if (this.locked == false) {
-        event.stopPropagation();
-        let ele = this.element;
-        //ele.edit = true;
-        this.$emit("getElementSelected", ele);
+      let ele = this.element;
+      this.$emit("getElementSelected", ele);
 
-        this.flag = true;
-        this.currentX = e.clientX;
-        this.currentY = e.clientY;
-        this.top = this.element.top;
-        this.left = this.element.left;
-        this.move();
-      }
+      this.flag = true;
+      this.currentX = e.clientX;
+      this.currentY = e.clientY;
+      this.top = this.element.top;
+      this.left = this.element.left;
+      this.move();
     },
     mouseup(e) {
       this.flag = false;
       this.scaleFlag = false;
     },
     dragstart(event) {
-      //console.log("dragstart");
       event.preventDefault();
+    },
+    delElementSelected(ele) {
+      this.element.children.splice(
+        this.element.children.findIndex(item => item.id === ele.id),
+        1
+      );
+    },
+    getElementSelected(ele) {
+      // 跟随变化
+      this.$emit("getElementSelected", ele);
+    },
+    clearElementSelected() {
+      this.$emit("clearElementSelected");
+    }
+  },
+  watch: {
+    // elementSelected: {
+    //   handler(newValue, oldValue) {
+    //     if (this.element.locked) {
+    //       this.elementSelected = {};
+    //     }
+    //   }
+    // },
+    "element.locked": {
+      handler(newValue, oldValue) {
+        if (newValue != oldValue) {
+          this.locked = newValue;
+          console.log(this.locked);
+        }
+      },
+      deep: true,
+      immediate: true
     }
   }
 };
 </script>
 
-<style lang='scss' scoped>
-.wrap {
+<style lang="scss" scoped>
+.layoutitem {
   position: absolute;
   cursor: move;
 
   &:focus {
     outline: none;
-  }
-
-  img {
-    position: absolute;
-    user-select: none;
-    /*-webkit-user-drag: none;*/
-  }
-
-  video {
-    position: absolute;
-    user-select: none;
   }
 }
 </style>

@@ -15,7 +15,11 @@
 export default {
   name: "Operate",
   props: {
-    element: Object
+    element: Object,
+    zoom: Number,
+    objtype: {
+      type: String
+    }
   },
   methods: {
     mousedown(downEvent, mark) {
@@ -26,30 +30,58 @@ export default {
       let width = ele.width;
       let top = ele.top;
       let left = ele.left;
-      let move = moveEvent => {
-        //console.log("editing");
-        let currX = moveEvent.clientX;
-        let currY = moveEvent.clientY;
-        let disY = currY - startY;
-        let disX = currX - startX;
-        let hasN = /n/.test(mark);
-        let hasS = /s/.test(mark);
-        let hasW = /w/.test(mark);
-        let hasE = /e/.test(mark);
-        let newHeight = +height + (hasN ? -disY : hasS ? disY : 0);
-        let newWidth = +width + (hasW ? -disX : hasE ? disX : 0);
-        ele.height = newHeight > 0 ? newHeight : 0;
-        ele.width = newWidth > 0 ? newWidth : 0;
-        ele.left = +left + (hasW ? disX : 0);
-        ele.top = +top + (hasN ? disY : 0);
-      };
+      let move = null;
+      if (this.objtype != "word") {
+        move = moveEvent => {
+          //console.log("editing");
+          let currX = moveEvent.clientX;
+          let currY = moveEvent.clientY;
+          let disY = parseInt((currY - startY) / this.zoom);
+          let disX = parseInt((currX - startX) / this.zoom);
+          let hasN = /n/.test(mark);
+          let hasS = /s/.test(mark);
+          let hasW = /w/.test(mark);
+          let hasE = /e/.test(mark);
+          let newHeight = +height + (hasN ? -disY : hasS ? disY : 0);
+          let newWidth = +width + (hasW ? -disX : hasE ? disX : 0);
+          ele.height = newHeight > 0 ? newHeight : 0;
+          ele.width = newWidth > 0 ? newWidth : 0;
+          ele.left = +left + (hasW ? disX : 0);
+          ele.top = +top + (hasN ? disY : 0);
+        };
+      } else {
+        move = moveEvent => {
+          //console.log("editing");
+          let currX = moveEvent.clientX;
+          let currY = moveEvent.clientY;
+          let disY = parseInt((currY - startY) / this.zoom);
+          let disX = parseInt((currX - startX) / this.zoom);
+          let hasN = /n/.test(mark);
+          let hasS = /s/.test(mark);
+          let hasW = /w/.test(mark);
+          let hasE = /e/.test(mark);
+          //let newHeight = +height + (hasN ? -disY : hasS ? disY : 0);
+          let newWidth = +width + (hasW ? -disX : hasE ? disX : 0);
+          //ele.height = newHeight > 0 ? newHeight : 0;
+          ele.width = newWidth > 0 ? newWidth : 0;
+          ele.left = +left + (hasW ? disX : 0);
+          ele.top = +top + (hasN ? disY : 0);
+        };
+      }
       let up = () => {
         document.removeEventListener("mousemove", move);
         document.removeEventListener("mouseup", up);
+        document.querySelector(".operate").removeEventListener("mouseup", up);
+        document
+          .querySelector(".layoutitem")
+          .removeEventListener("mouseup", up);
+
         //console.log("edit end");
       };
       document.addEventListener("mousemove", move);
       document.addEventListener("mouseup", up);
+      document.querySelector(".operate").addEventListener("mouseup", up);
+      document.querySelector(".layoutitem").removeEventListener("mouseup", up);
     }
   },
   watch: {

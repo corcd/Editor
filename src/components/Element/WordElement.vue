@@ -1,12 +1,20 @@
 <template>
   <aside
-    class="element"
+    class="wrap"
+    v-show="element.visible"
     :style="{'top':element.top+'px','left':element.left+'px','z-index':element.index}"
-    @click.stop="showEditor"
+    :tabindex="element.index"
+    @click="showEditor"
     @mousedown="mousedown"
     @keydown="keyboard($event)"
   >
-    <Operate class="operate" v-show="(element.id == elementSelected.id)" :element="element"/>
+    <Operate
+      class="operate"
+      v-show="(element.id == elementSelected.id)"
+      :element="element"
+      :zoom="zoom"
+      :objtype="'word'"
+    />
     <section class="content" @dragstart="dragstart">
       <div :class="'animated'+ ' ' + this.element['animation']" :style="styleAnime">
         <div v-show="element.type=='word'" :style="styleBasic(element)">{{ element.text }}</div>
@@ -22,30 +30,50 @@ export default {
   props: {
     resolution: String,
     zoom: Number,
+    locked: {
+      type: Boolean,
+      default: false
+    },
     element: {
       type: Object,
       require: true
     },
     elementSelected: {
-      type: Object,
-      default: null
-    }
+      type: Object
+    },
+    marqueeStatus: { type: String, default: "normal" },
+    marqueeDuration: Number
   },
   data() {
     return {
+      marquee_timer: null,
       left: 0,
       top: 0,
       width: 0,
       height: 0,
       currentX: 0,
-      currentY: 0,
-      flag: false,
-      scaleFlag: false,
-      direction: ""
+      currentY: 0
     };
   },
   created() {
     //this.marquee(10, true);
+    if (this.marqueeStatus == "normal") {
+      clearInterval(this.marquee_timer);
+      this.marquee_timer = null;
+      //this.$Message.warning("Marquee Cancel");
+    } else if (this.marqueeStatus == "once") {
+      this.marquee(this.element, this.marqueeDuration, false);
+      //this.$Message.success("Marquee Applied Once");
+    } else if (this.marqueeStatus == "loop") {
+      this.marquee(this.element, this.marqueeDuration, true);
+      //this.$Message.success("Marquee Applied Loop");
+    } else {
+      this.$Message.error("Marquee Error");
+    }
+  },
+  beforeDestroy() {
+    clearInterval(this.marquee_timer);
+    this.marquee_timer = null;
   },
   computed: {
     styleAnime() {
@@ -71,8 +99,10 @@ export default {
       };
     },
     keyboard(event) {
+      event.preventDefault();
+      event.stopPropagation();
       if (event.keyCode == 13) {
-        //this.$Message.info("Enter");
+        this.$Message.info("Enter");
       } else if (event.keyCode == 8) {
         //this.$Message.info("BackSpace");
         this.delElementSelected(this.element);
@@ -97,12 +127,14 @@ export default {
       this.$emit("delElementSelected", ele);
     },
     showEditor() {
-      console.log(this.element);
-      let ele = this.element;
-      //ele.edit = true;
-      this.$emit("getElementSelected", ele);
+      //console.log(this.element);
+      if (this.locked == false) {
+        event.stopPropagation();
+        let ele = this.element;
+        this.$emit("getElementSelected", ele);
+      }
+
       let click = () => {
-        //ele.edit = false;
         this.$emit("clearElementSelected");
         document
           .querySelector(".inside-container")
@@ -117,13 +149,17 @@ export default {
       document.querySelector(".dragCanvas").addEventListener("click", click);
     },
     mousedown(downEvent) {
-      let ele = this.element;
-      this.$emit("getElementSelected", ele);
+      if (this.locked == false) {
+        event.stopPropagation();
+        let ele = this.element;
+        this.$emit("getElementSelected", ele);
+      }
 
       let startY = downEvent.clientY;
       let startX = downEvent.clientX;
       let startTop = this.element.top;
       let startLeft = this.element.left;
+
       let move = moveEvent => {
         let currX = moveEvent.clientX;
         let currY = moveEvent.clientY;
@@ -134,19 +170,30 @@ export default {
         document.removeEventListener("mousemove", move);
         document.removeEventListener("mouseup", up);
       };
-      document.addEventListener("mousemove", move);
-      document.addEventListener("mouseup", up);
+      if (this.locked == false) {
+        document.addEventListener("mousemove", move);
+        document.addEventListener("mouseup", up);
+      }
     },
     dragstart(event) {
       //console.log("dragstart");
       event.preventDefault();
     },
     marquee(ele, delay, loop) {
-      const lastLeft = ele.left;
-      const differ = 1280 - ele.left;
-      let realdiffer = 0;
-      let timer = setInterval(() => {
+      clearInterval(this.marquee_timer);
+      this.marquee_timer = null;
+
+      ele.left = 1280;
+      this.marquee_timer = setInterval(() => {
         this.$nextTick(() => {
+          if (ele.left <= -ele.width) {
+            if (!loop) {
+              clearInterval(this.marquee_timer);
+              this.marquee_timer = null;
+            } else {
+              ele.left = 1280;
+            }
+          }
           ele.left--;
           this.animate = !this.animate;
         });
@@ -154,12 +201,43 @@ export default {
     }
   },
   watch: {
+    marqueeStatus: {
+      handler(newValue, oldValue) {
+        if (newValue != oldValue) {
+          if (newValue == "normal") {
+            clearInterval(this.marquee_timer);
+            this.marquee_timer = null;
+            //this.$Message.warning("Marquee Cancel");
+          } else if (newValue == "once") {
+            this.marquee(this.element, this.marqueeDuration, false);
+            //this.$Message.success("Marquee Applied Once");
+          } else if (newValue == "loop") {
+            this.marquee(this.element, this.marqueeDuration, true);
+            //this.$Message.success("Marquee Applied Loop");
+          } else {
+            this.$Message.error("Marquee Error");
+          }
+        }
+      }
+    },
+    marqueeDuration: {
+      handler(newValue, oldValue) {
+        if (newValue != oldValue && this.marqueeStatus == "loop") {
+          this.marquee(this.element, newValue, true);
+        } else if (newValue != oldValue && this.marqueeStatus == "once") {
+          this.marquee(this.element, newValue, false);
+        } else {
+          clearInterval(this.marquee_timer);
+          this.marquee_timer = null;
+        }
+      }
+    }
   }
 };
 </script>
 
 <style lang='scss' scoped>
-.element {
+.wrap {
   position: absolute;
   cursor: move;
 
@@ -171,7 +249,7 @@ export default {
     z-index: 2;
   }
 
-  .content {
+  section {
     white-space: pre-wrap;
     word-wrap: break-word;
     position: relative;

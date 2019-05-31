@@ -18,18 +18,48 @@
       <section
         class="showWord"
         v-for="element in filterOfWord"
+        draggable="false"
         :key="element.id"
         :style="{'top':element.top+'px','left':element.left+'px','z-index':element.index}"
       >
         <div :class="'animated'+ ' ' + element['animation']" :style="styleAnime(element)">
-          <div id="ele_word_stage" draggable="false" :style="styleBasic(element)">{{ element.text }}</div>
+          <div id="ele_word_stage" :style="styleBasic(element)">{{ element.text }}</div>
         </div>
       </section>
+
+      <aside
+        v-for="element in filterOfLayout"
+        :key="element.id"
+        :style="{'top':element.top+'px','left':element.left+'px','z-index':element.index}"
+      >
+        <img
+          class="showImg"
+          alt="img"
+          draggable="false"
+          v-for="item in filterOfChildrenImg(element)"
+          :key="item.id"
+          :src="item.imgSrc"
+          :style="{'top':item.top+'px','left':item.left+'px','width':item.width+'px','height':item.height+'px','opacity':(item.alpha/100.0),'z-index':item.index}"
+        >
+        <section
+          class="showWord"
+          v-for="item in filterOfChildrenWord(element)"
+          draggable="false"
+          :key="item.id"
+          :style="{'top':item.top+'px','left':item.left+'px','z-index':item.index}"
+        >
+          <div :class="'animated'+ ' ' + item['animation']" :style="styleAnime(item)">
+            <div id="ele_word_stage" :style="styleBasic(item)">{{ item.text }}</div>
+          </div>
+        </section>
+      </aside>
     </div>
   </div>
 </template>
 
 <script>
+import "animate.css";
+import "../assets/css/custom.css";
 export default {
   name: "stage",
   components: {},
@@ -98,9 +128,18 @@ export default {
     },
     filterOfWord() {
       return this.elements.filter(item => item.type == "word");
+    },
+    filterOfLayout() {
+      return this.elements.filter(item => item.type == "layout");
     }
   },
   methods: {
+    filterOfChildrenImg(ele) {
+      return ele.children.filter(item => item.type == "img");
+    },
+    filterOfChildrenWord(ele) {
+      return ele.children.filter(item => item.type == "word");
+    },
     styleAnime(ele) {
       return {
         animationIterationCount: ele["loop"] ? "infinite" : "initial",
@@ -170,8 +209,14 @@ export default {
       padding: 0;
       white-space: pre-wrap;
       word-wrap: break-word;
-      position: relative;
+      position: absolute;
       user-select: none;
+    }
+
+    aside {
+      margin: 0;
+      padding: 0;
+      position: absolute;
     }
   }
 }

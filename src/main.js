@@ -16,7 +16,7 @@ import "./assets/css/global.scss";
 // Vuex
 Vue.use(Vuex);
 // Socket.io
-Vue.use(VueSocketio, io("http://139.196.92.199:3006"));
+Vue.use(VueSocketio, io("https://editor.guangdianyun.tv:3006"));
 // iView
 Vue.use(iView);
 // vcomp

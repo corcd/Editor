@@ -6,10 +6,12 @@
                 "height": 200,
                 "top": 0,
                 "left": 0,
+                "title": "",
                 "type": "img",
                 "imgSrc": "http://dingyue.nosdn.127.net/rdVGgleN1ShQeYpNeWL7HkScsZZhbwdaPzoWUaGzD0=PM1529677325458.jpg",
                 "alpha": 100,
-                "index": 1
+                "index": 1,
+                "visible": true
             },
             {
                 "id": 2,
@@ -17,10 +19,12 @@
                 "height": 270,
                 "top": 330,
                 "left": 330,
+                "title": "",
                 "type": "img",
                 "imgSrc": "https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1558499953926&di=ee19bce12356b3a669815e9c476fdc8b&imgtype=0&src=http%3A%2F%2Fstatic.open-open.com%2Fnews%2FuploadImg%2F20151213%2F20151213224253_256.png",
                 "alpha": 100,
-                "index": 2
+                "index": 2,
+                "visible": true
             }
         ],
         "lastIndex": 3
@@ -32,12 +36,93 @@
                 "height": 200,
                 "top": 0,
                 "left": 0,
+                "title": "",
                 "type": "img",
                 "imgSrc": "http://dingyue.nosdn.127.net/rdVGgleN1ShQeYpNeWL7HkScsZZhbwdaPzoWUaGzD0=PM1529677325458.jpg",
                 "alpha": 100,
-                "index": 1
+                "index": 1,
+                "visible": true
+            },
+            {
+                "id": 2,
+                "width": 800,
+                "height": 200,
+                "top": 0,
+                "left": 0,
+                "title": "",
+                "type": "layout",
+                "alpha": 100,
+                "index": 2,
+                "locked": false,
+                "visible": true,
+                "children": [{
+                        "id": 3,
+                        "width": 289,
+                        "height": 135,
+                        "top": 0,
+                        "left": 0,
+                        "title": "",
+                        "type": "img",
+                        "imgSrc": "http://prvz33yaw.bkt.clouddn.com/%E6%A0%87%E9%A2%98%E6%A0%8F.png",
+                        "alpha": 100,
+                        "index": 3,
+                        "visible": true
+                    },
+                    {
+                        "id": 4,
+                        "width": 100,
+                        "top": 0,
+                        "left": 0,
+                        "title": "",
+                        "lineHeight": 1.5,
+                        "type": "word",
+                        "text": "组件测试",
+                        "color": "#000000",
+                        "textAlign": "left",
+                        "fontSize": 28,
+                        "fontWeight": "normal",
+                        "fontFamily": "Helvetica",
+                        "alpha": 100,
+                        "index": 4,
+                        "visible": true,
+                        "playing": true,
+                        "tranform": 0,
+                        "animation": "",
+                        "loop": false,
+                        "duration": 1,
+                        "delay": 0,
+                        "marquee_pattern": "normal",
+                        "marquee_duration": 10
+                    },
+                    {
+                        "id": 5,
+                        "width": 200,
+                        "top": 0,
+                        "left": 0,
+                        "title": "",
+                        "lineHeight": 1.5,
+                        "type": "word",
+                        "text": "组件测试副标题",
+                        "color": "#000000",
+                        "textAlign": "left",
+                        "fontSize": 28,
+                        "fontWeight": "normal",
+                        "fontFamily": "Helvetica",
+                        "alpha": 100,
+                        "index": 4,
+                        "visible": true,
+                        "playing": true,
+                        "tranform": 0,
+                        "animation": "",
+                        "loop": false,
+                        "duration": 1,
+                        "delay": 0,
+                        "marquee_pattern": "normal",
+                        "marquee_duration": 10
+                    }
+                ]
             }
         ],
-        "lastIndex": 2
+        "lastIndex": 6
     }
 }
