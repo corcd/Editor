@@ -106,7 +106,7 @@ export default {
       data: {},
       elements: [],
       eleSelected: {},
-      lastIndex: 0
+      lastIndex: 1
     };
   },
   sockets: {
@@ -121,29 +121,65 @@ export default {
   },
   beforeCreate() {},
   created() {
+    this.$Loading.start();
+    // 获取 appid
     this.appid = this.$utils.parseUrl("appid");
-    if (this.appid == null) {
+    if (this.appid == "" || this.appid == undefined) {
       this.$Message.error("No user");
-      console.log("No user:");
+      console.log(response.data.msg);
+      this.$Loading.finish();
       this.$router.push({
         path: "/error",
         query: { msg: "No user" }
       });
-    } else {
-      if (this.$store.state[this.appid] != undefined) {
-        console.log("current user:", this.appid);
-        this.elements = this.$store.state[this.appid].elements;
-        this.lastIndex = this.$store.state[this.appid].lastIndex;
-        console.log(this.lastIndex);
-      } else {
-        this.$store.dispatch("createNode", {
-          id: this.appid
-        });
-        console.log("new user:", this.appid);
-        this.elements = [];
-        this.lastIndex = 1;
-      }
     }
+    let _this = this;
+    this.$axios
+      .post("https://editor.guangdianyun.tv:3006/getData", {
+        appid: _this.appid,
+        type: "editor"
+      })
+      .then(function(response) {
+        if (response.data.code == "1") {
+          _this.$Message.success("Init Success");
+          console.log(response.data.msg);
+          _this.elements = response.data.data.elements;
+          _this.lastIndex = response.data.data.lastIndex;
+          _this.$Loading.finish();
+        } else if (response.data.code == "0") {
+          
+        } else {
+          _this.$Message.error("Init Failed");
+          _this.$Loading.error();
+        }
+      })
+      .catch(function(error) {
+        _this.$Message.error("Init Error");
+        _this.$Loading.error();
+      });
+
+    // if (this.appid == null) {
+    //   this.$Message.error("No user");
+    //   console.log("No user:");
+    //   this.$router.push({
+    //     path: "/error",
+    //     query: { msg: "No user" }
+    //   });
+    // } else {
+    //   if (this.$store.state[this.appid] != undefined) {
+    //     console.log("current user:", this.appid);
+    //     this.elements = this.$store.state[this.appid].elements;
+    //     this.lastIndex = this.$store.state[this.appid].lastIndex;
+    //     console.log(this.lastIndex);
+    //   } else {
+    //     this.$store.dispatch("createNode", {
+    //       id: this.appid
+    //     });
+    //     console.log("new user:", this.appid);
+    //     this.elements = [];
+    //     this.lastIndex = 1;
+    //   }
+    // }
   },
   mounted() {
     let socketObj = { appid: this.appid, type: "editor" };
@@ -248,93 +284,411 @@ export default {
         this.lastIndex++;
         this.elements.push(newObj);
       } else if (type == "layout") {
-        newObj = {
-          id: this.lastIndex,
-          width: 980,
-          height: 177,
-          top: 550,
-          left: 22,
-          title: "",
-          type: "layout",
-          alpha: 100,
-          index: 2,
-          locked: true,
-          visible: true,
-          children: [
-            {
-              id: this.lastIndex + 1,
-              width: 815,
-              height: 135,
-              top: -2,
-              left: 0,
-              title: "",
-              type: "img",
-              imgSrc:
-                "http://prvz33yaw.bkt.clouddn.com/%E6%A0%87%E9%A2%98%E6%A0%8F.png",
-              alpha: 100,
-              index: 3,
-              visible: true,
-              duration: 0.1,
-              marquee_duration: 1
-            },
-            {
-              id: this.lastIndex + 2,
-              width: 158,
-              top: 34,
-              left: 74,
-              title: "",
-              lineHeight: 1.5,
-              type: "word",
-              text: "组件测试",
-              color: "#FFFFFF",
-              textAlign: "left",
-              fontSize: "36",
-              fontWeight: "bold",
-              fontFamily: "Helvetica",
-              alpha: 100,
-              index: 4,
-              visible: true,
-              playing: true,
-              tranform: 0,
-              animation: "",
-              loop: false,
-              duration: 1,
-              delay: 0,
-              marquee_pattern: "normal",
-              marquee_duration: 10
-            },
-            {
-              id: this.lastIndex + 3,
-              width: 200,
-              top: 83,
-              left: 76,
-              title: "",
-              lineHeight: 1.5,
-              type: "word",
-              text: "组件测试副标题",
-              color: "#FFFFFF",
-              textAlign: "left",
-              fontSize: "24",
-              fontWeight: "normal",
-              fontFamily: "Helvetica",
-              alpha: 100,
-              index: 4,
-              visible: true,
-              playing: true,
-              tranform: 0,
-              animation: "",
-              loop: false,
-              duration: 1,
-              delay: 0,
-              marquee_pattern: "normal",
-              marquee_duration: 10
-            }
-          ],
-          duration: 0.1,
-          marquee_duration: 1
-        };
-        this.lastIndex = this.lastIndex + 4;
-        this.elements.push(newObj);
+        if (param == "default_1") {
+          newObj = {
+            id: this.lastIndex,
+            width: 880,
+            height: 177,
+            top: 550,
+            left: 22,
+            title: "",
+            type: "layout",
+            alpha: 100,
+            index: 2,
+            locked: true,
+            visible: true,
+            children: [
+              {
+                id: this.lastIndex + 1,
+                width: 815,
+                height: 135,
+                top: -2,
+                left: 0,
+                title: "",
+                type: "img",
+                imgSrc:
+                  "http://prvz33yaw.bkt.clouddn.com/images-oss_title_1.png",
+                alpha: 100,
+                index: 3,
+                visible: true,
+                duration: 0.1,
+                marquee_duration: 1
+              },
+              {
+                id: this.lastIndex + 2,
+                width: 158,
+                top: 34,
+                left: 74,
+                title: "",
+                lineHeight: 1.5,
+                type: "word",
+                text: "组件测试",
+                color: "#FFFFFF",
+                textAlign: "left",
+                fontSize: "36",
+                fontWeight: "bold",
+                fontFamily: "Helvetica",
+                alpha: 100,
+                index: 4,
+                visible: true,
+                playing: true,
+                tranform: 0,
+                animation: "",
+                loop: false,
+                duration: 1,
+                delay: 0,
+                marquee_pattern: "normal",
+                marquee_duration: 10
+              },
+              {
+                id: this.lastIndex + 3,
+                width: 200,
+                top: 83,
+                left: 76,
+                title: "",
+                lineHeight: 1.5,
+                type: "word",
+                text: "组件测试副标题",
+                color: "#FFFFFF",
+                textAlign: "left",
+                fontSize: "24",
+                fontWeight: "normal",
+                fontFamily: "Helvetica",
+                alpha: 100,
+                index: 4,
+                visible: true,
+                playing: true,
+                tranform: 0,
+                animation: "",
+                loop: false,
+                duration: 1,
+                delay: 0,
+                marquee_pattern: "normal",
+                marquee_duration: 10
+              }
+            ],
+            duration: 0.1,
+            marquee_duration: 1
+          };
+          this.lastIndex = this.lastIndex + 4;
+          this.elements.push(newObj);
+        } else if (param == "default_2") {
+          newObj = {
+            id: this.lastIndex,
+            width: 880,
+            height: 177,
+            top: 550,
+            left: 22,
+            title: "",
+            type: "layout",
+            alpha: 100,
+            index: 2,
+            locked: true,
+            visible: true,
+            children: [
+              {
+                id: this.lastIndex + 1,
+                width: 815,
+                height: 135,
+                top: -2,
+                left: 0,
+                title: "",
+                type: "img",
+                imgSrc:
+                  "http://prvz33yaw.bkt.clouddn.com/images-oss_title_2.png",
+                alpha: 100,
+                index: 3,
+                visible: true,
+                duration: 0.1,
+                marquee_duration: 1
+              },
+              {
+                id: this.lastIndex + 2,
+                width: 158,
+                top: 17,
+                left: 32,
+                title: "",
+                lineHeight: 1.5,
+                type: "word",
+                text: "组件测试",
+                color: "#FFFFFF",
+                textAlign: "left",
+                fontSize: "36",
+                fontWeight: "bold",
+                fontFamily: "Helvetica",
+                alpha: 100,
+                index: 4,
+                visible: true,
+                playing: true,
+                tranform: 0,
+                animation: "",
+                loop: false,
+                duration: 1,
+                delay: 0,
+                marquee_pattern: "normal",
+                marquee_duration: 10
+              },
+              {
+                id: this.lastIndex + 3,
+                width: 200,
+                top: 97,
+                left: 32,
+                title: "",
+                lineHeight: 1.5,
+                type: "word",
+                text: "组件测试副标题",
+                color: "#000000",
+                textAlign: "left",
+                fontSize: "24",
+                fontWeight: "normal",
+                fontFamily: "Helvetica",
+                alpha: 100,
+                index: 4,
+                visible: true,
+                playing: true,
+                tranform: 0,
+                animation: "",
+                loop: false,
+                duration: 1,
+                delay: 0,
+                marquee_pattern: "normal",
+                marquee_duration: 10
+              }
+            ],
+            duration: 0.1,
+            marquee_duration: 1
+          };
+          this.lastIndex = this.lastIndex + 4;
+          this.elements.push(newObj);
+        } else if (param == "default_3") {
+          newObj = {
+            id: this.lastIndex,
+            width: 880,
+            height: 150,
+            top: 550,
+            left: 22,
+            title: "",
+            type: "layout",
+            alpha: 100,
+            index: 2,
+            locked: true,
+            visible: true,
+            children: [
+              {
+                id: this.lastIndex + 1,
+                width: 815,
+                height: 135,
+                top: -2,
+                left: 0,
+                title: "",
+                type: "img",
+                imgSrc:
+                  "http://prvz33yaw.bkt.clouddn.com/images-oss_title_3.png",
+                alpha: 100,
+                index: 3,
+                visible: true,
+                duration: 0.1,
+                marquee_duration: 1
+              },
+              {
+                id: this.lastIndex + 2,
+                width: 158,
+                top: 49,
+                left: 73,
+                title: "",
+                lineHeight: 1.5,
+                type: "word",
+                text: "组件测试",
+                color: "#FFFFFF",
+                textAlign: "left",
+                fontSize: "36",
+                fontWeight: "bold",
+                fontFamily: "Helvetica",
+                alpha: 100,
+                index: 4,
+                visible: true,
+                playing: true,
+                tranform: 0,
+                animation: "",
+                loop: false,
+                duration: 1,
+                delay: 0,
+                marquee_pattern: "normal",
+                marquee_duration: 10
+              },
+              {
+                id: this.lastIndex + 3,
+                width: 200,
+                top: -4,
+                left: 76,
+                title: "",
+                lineHeight: 1.5,
+                type: "word",
+                text: "组件测试副标题",
+                color: "#FFFFFF",
+                textAlign: "left",
+                fontSize: "24",
+                fontWeight: "normal",
+                fontFamily: "Helvetica",
+                alpha: 100,
+                index: 4,
+                visible: true,
+                playing: true,
+                tranform: 0,
+                animation: "",
+                loop: false,
+                duration: 1,
+                delay: 0,
+                marquee_pattern: "normal",
+                marquee_duration: 10
+              }
+            ],
+            duration: 0.1,
+            marquee_duration: 1
+          };
+          this.lastIndex = this.lastIndex + 4;
+          this.elements.push(newObj);
+        } else if (param == "default_4") {
+          newObj = {
+            id: this.lastIndex,
+            width: 880,
+            height: 177,
+            top: 541,
+            left: 207,
+            title: "",
+            type: "layout",
+            alpha: 100,
+            index: 2,
+            locked: true,
+            visible: true,
+            children: [
+              {
+                id: this.lastIndex + 1,
+                width: "796",
+                height: "120",
+                top: 29,
+                left: 42,
+                title: "",
+                type: "img",
+                imgSrc:
+                  "http://prvz33yaw.bkt.clouddn.com/images-oss_1559528456000.png",
+                alpha: 100,
+                index: 1,
+                visible: true,
+                duration: 0.1,
+                marquee_duration: 1
+              },
+              {
+                id: this.lastIndex + 2,
+                width: 35,
+                top: 56,
+                left: 375,
+                title: "",
+                lineHeight: 1.5,
+                type: "word",
+                text: "1",
+                color: "#FFFFFF",
+                textAlign: "center",
+                fontSize: "46",
+                fontWeight: "normal",
+                fontFamily: "Helvetica",
+                alpha: 100,
+                index: 1,
+                visible: true,
+                playing: true,
+                tranform: 0,
+                animation: "",
+                loop: false,
+                duration: 1,
+                delay: 0,
+                marquee_pattern: "normal",
+                marquee_duration: 10
+              },
+              {
+                id: this.lastIndex + 3,
+                width: "35",
+                top: 57,
+                left: 469,
+                title: "",
+                lineHeight: 1.5,
+                type: "word",
+                text: "1",
+                color: "#FFFFFF",
+                textAlign: "center",
+                fontSize: "46",
+                fontWeight: "normal",
+                fontFamily: "Helvetica",
+                alpha: 100,
+                index: 1,
+                visible: true,
+                playing: true,
+                tranform: 0,
+                animation: "",
+                loop: false,
+                duration: 1,
+                delay: 0,
+                marquee_pattern: "normal",
+                marquee_duration: 10
+              },
+              {
+                id: this.lastIndex + 4,
+                width: "145",
+                top: 70,
+                left: 120,
+                title: "",
+                lineHeight: 1.5,
+                type: "word",
+                text: "队伍 1",
+                color: "#FFFFFF",
+                textAlign: "center",
+                fontSize: 28,
+                fontWeight: "bold",
+                fontFamily: "Helvetica",
+                alpha: 100,
+                index: 1,
+                visible: true,
+                playing: true,
+                tranform: 0,
+                animation: "",
+                loop: false,
+                duration: 1,
+                delay: 0,
+                marquee_pattern: "normal",
+                marquee_duration: 10
+              },
+              {
+                id: this.lastIndex + 5,
+                width: 145,
+                top: 70,
+                left: 618,
+                title: "",
+                lineHeight: 1.5,
+                type: "word",
+                text: "队伍 2",
+                color: "#FFFFFF",
+                textAlign: "center",
+                fontSize: 28,
+                fontWeight: "bold",
+                fontFamily: "Helvetica",
+                alpha: 100,
+                index: 1,
+                visible: true,
+                playing: true,
+                tranform: 0,
+                animation: "",
+                loop: false,
+                duration: 1,
+                delay: 0,
+                marquee_pattern: "normal",
+                marquee_duration: 10
+              }
+            ],
+            duration: 0.1,
+            marquee_duration: 1
+          };
+          this.lastIndex = this.lastIndex + 6;
+          this.elements.push(newObj);
+        }
       }
 
       //this.$store.commit("indexIncrement", this.lastIndex);
@@ -395,6 +749,10 @@ export default {
         Mag: this.mag,
         Objs: this.elements
       };
+      this.$socket.emit("sendMsgPre", {
+        appid: this.appid,
+        data: socketData
+      });
       if (this.isExportable) {
         this.$socket.emit("sendMsg", {
           appid: this.appid,
@@ -416,24 +774,24 @@ export default {
     exportJSON(type) {
       this.$Loading.start();
       console.log(this.elements);
-      this.$store.dispatch("updateElements", {
-        id: this.appid,
-        eles: this.elements
-      });
-      this.$store.dispatch("indexIncrement", {
-        id: this.appid,
-        index: this.lastIndex
-      });
+      // this.$store.dispatch("updateElements", {
+      //   id: this.appid,
+      //   eles: this.elements
+      // });
+      // this.$store.dispatch("indexIncrement", {
+      //   id: this.appid,
+      //   index: this.lastIndex
+      // });
       let _this = this;
-      console.log(_this.$store.state);
+      //console.log(_this.$store.state);
       this.$axios
-        .post(
-          "https://editor.guangdianyun.tv:3006/data",
-          JSON.parse(JSON.stringify(_this.$store.state))
-        )
+        .post("https://editor.guangdianyun.tv:3006/setData", {
+          appid: _this.appid,
+          data: { elements: _this.elements, lastIndex: _this.lastIndex }
+        })
         .then(function(response) {
           console.log(response);
-          if (response.data.code == 1) {
+          if (response.data.code == "1") {
             if (type != "") {
               _this.$Message.success("Auto Save");
             } else {

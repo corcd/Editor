@@ -1,0 +1,1305 @@
+<template>
+  <div class="inside home">
+    <div class="inside-header">
+      <div class="inside-header-info">
+        <span class="inside-header-info-main">编辑器</span>
+        <span class="inside-header-info-sub">V 0.9.2</span>
+        <Tag color="#1db5ad">BETA</Tag>
+      </div>
+      <div class="inside-header-controller">
+        <div class="inside-header-save" @click="clearStageTest">
+          <span>清除测试</span>
+        </div>
+        <div class="inside-header-save" @click="onceUpdataTest">
+          <span>切换测试</span>
+        </div>
+        <div class="inside-header-save">
+          <span>保存为新场景</span>
+        </div>
+        <div class="inside-header-save" @click="saveData">
+          <span>保存当前场景</span>
+        </div>
+      </div>
+    </div>
+    <div class="inside-content">
+      <div class="inside-sidebar">
+        <div class="inside-sidebar-divider">
+          <span>添加元素</span>
+        </div>
+        <Upload
+          :action="domain"
+          :http-request="upqiniu"
+          :format="['jpg','jpeg','png']"
+          :max-size="2048"
+          :on-format-error="handleFormatError"
+          :on-exceeded-size="handleMaxSize"
+          :before-upload="handleBeforeUpload"
+        >
+          <div class="inside-sidebar-button">
+            <span>添加图片</span>
+          </div>
+        </Upload>
+        <Poptip placement="bottom">
+          <div class="inside-sidebar-button">
+            <span>添加字幕</span>
+          </div>
+          <div class="api" slot="content">
+            <Input v-model="newText" placeholder="Enter something..." style="width: 150px"/>
+            <Button type="default" class="btn-new-word-confirm" @click="addWord">Add</Button>
+          </div>
+        </Poptip>
+        <div class="inside-sidebar-divider">
+          <span>预设字幕条</span>
+        </div>
+        <ComponentPicker
+          :imgSrc="'http://prvz33yaw.bkt.clouddn.com/images-oss_title_1.png'"
+          :title="'预设字幕条 1'"
+          :type="'default_1'"
+          @addElement="addElement"
+        ></ComponentPicker>
+        <ComponentPicker
+          :imgSrc="'http://prvz33yaw.bkt.clouddn.com/images-oss_title_2.png'"
+          :title="'预设字幕条 2'"
+          :type="'default_2'"
+          @addElement="addElement"
+        ></ComponentPicker>
+        <ComponentPicker
+          :imgSrc="'http://prvz33yaw.bkt.clouddn.com/images-oss_title_3.png'"
+          :title="'预设字幕条 3'"
+          :type="'default_3'"
+          @addElement="addElement"
+        ></ComponentPicker>
+        <div class="inside-sidebar-divider">
+          <span>预设比分板</span>
+        </div>
+        <ComponentPicker
+          :imgSrc="'http://prvz33yaw.bkt.clouddn.com/images-oss_1559528456000.png'"
+          :title="'预设比分板 1'"
+          :type="'default_4'"
+          @addElement="addElement"
+        ></ComponentPicker>
+      </div>
+      <div class="inside-editor">
+        <div class="inside-editor-toolbar">
+          <div class="inside-editor-toolbar-tools">
+            <div class="inside-editor-toolbar-tools-content">
+              <div
+                class="inside-editor-toolbar-tools-style"
+                v-if="eleSelected.type=='layout' && eleSelected.model=='score'"
+              >
+                <span style="width: 120px !important;">队伍 1:</span>
+                <Input
+                  v-model="eleSelected.children[3].text"
+                  placeholder="请输入标题内容..."
+                  style="margin-right: 5px;"
+                  clearable
+                />
+                <ColorPicker v-model="eleSelected.children[3].color" recommend></ColorPicker>
+              </div>
+              <div class="inside-editor-toolbar-tools-style" v-if="eleSelected.type=='layout'">
+                <span v-show="eleSelected.model!='score'" style="width: 100px !important;">标题:</span>
+                <span v-show="eleSelected.model=='score'" style="width: 100px !important;">比分:</span>
+                <Input
+                  v-model="eleSelected.children[1].text"
+                  placeholder="请输入标题内容..."
+                  style="margin-right: 5px;"
+                  clearable
+                />
+                <ColorPicker v-model="eleSelected.children[1].color" recommend></ColorPicker>
+              </div>
+              <div
+                class="inside-editor-toolbar-tools-style"
+                v-if="eleSelected.type=='layout' && eleSelected.model=='score'"
+              >
+                <span style="width: 120px !important;">队伍 2:</span>
+                <Input
+                  v-model="eleSelected.children[4].text"
+                  placeholder="请输入副标题内容..."
+                  style="margin-right: 5px;"
+                  clearable
+                />
+                <ColorPicker v-model="eleSelected.children[4].color" recommend></ColorPicker>
+              </div>
+              <div class="inside-editor-toolbar-tools-style" v-if="eleSelected.type=='layout'">
+                <span v-show="eleSelected.model!='score'" style="width: 120px !important;">副标题:</span>
+                <span v-show="eleSelected.model=='score'" style="width: 100px !important;">比分:</span>
+                <Input
+                  v-model="eleSelected.children[2].text"
+                  placeholder="请输入副标题内容..."
+                  style="margin-right: 5px;"
+                  clearable
+                />
+                <ColorPicker v-model="eleSelected.children[2].color" recommend></ColorPicker>
+              </div>
+
+              <div class="inside-editor-toolbar-tools-style" v-show="eleSelected.type=='word'">
+                <span>字体:</span>
+                <Select v-model="eleSelected.fontFamily" style="width: 90px;">
+                  <Option v-for="item in fontFamily" :key="item" :label="item" :value="item"></Option>
+                </Select>
+              </div>
+              <div class="inside-editor-toolbar-tools-style" v-show="eleSelected.type=='word'">
+                <span>字型:</span>
+                <i-switch size="large" v-model="switchStatus" @on-change="changeFontWeight">
+                  <span slot="open">Bold</span>
+                  <span slot="close">Norm</span>
+                </i-switch>
+              </div>
+              <div class="inside-editor-toolbar-tools-style" v-if="eleSelected.type=='word'">
+                <span>颜色:</span>
+                <ColorPicker v-model="eleSelected.color" recommend></ColorPicker>
+              </div>
+              <div class="inside-editor-toolbar-tools-style" v-show="eleSelected.type=='word'">
+                <ButtonGroup class="textAlignControl">
+                  <Button
+                    :disabled="eleSelected.textAlign == 'left'"
+                    @click="changeTextAlign('left')"
+                  >L</Button>
+                  <Button
+                    :disabled="eleSelected.textAlign == 'center'"
+                    @click="changeTextAlign('center')"
+                  >C</Button>
+                  <Button
+                    :disabled="eleSelected.textAlign == 'right'"
+                    @click="changeTextAlign('right')"
+                  >R</Button>
+                </ButtonGroup>
+              </div>
+              <div class="inside-editor-toolbar-tools-style" v-show="eleSelected.type=='word'">
+                <span>字号:</span>
+                <InputNumber :max="100" :min="8" v-model="eleSelected.fontSize"></InputNumber>
+              </div>
+
+              <div
+                class="inside-editor-toolbar-tools-style"
+                v-show="eleSelected.type=='word' || eleSelected.type=='img'"
+              >
+                <span>透明度:</span>
+                <InputNumber :max="100" :min="1" v-model="eleSelected.alpha"></InputNumber>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="inside-editor-content inside-container">
+          <div
+            class="dragCanvas canvas"
+            v-bind:class="[resolution == '480P' ? 'simpleCanvas':'',resolution == '720P' ? 'normalCanvas':'',resolution == '1080P' ? 'extendCanvas':'',isCanvasColorBlack ? 'blackCanvas':'']"
+          >
+            <ImgElement
+              v-for="element in filterOfImg"
+              :key="element.id"
+              :resolution="resolution"
+              :zoom="zoom"
+              :element="element"
+              :elementSelected="eleSelected"
+              @getElementSelected="getElementSelected"
+              @clearElementSelected="clearElementSelected"
+              @delElementSelected="delElementSelected"
+            ></ImgElement>
+            <WordElement
+              v-for="element in filterOfWord"
+              :key="element.id"
+              :resolution="resolution"
+              :zoom="zoom"
+              :element="element"
+              :elementSelected="eleSelected"
+              :marqueeStatus="element.marquee_pattern"
+              :marqueeDuration="element.marquee_duration"
+              @getElementSelected="getElementSelected"
+              @clearElementSelected="clearElementSelected"
+              @delElementSelected="delElementSelected"
+            ></WordElement>
+            <LayoutItem
+              v-for="element in filterOfLayout"
+              :key="element.id"
+              :resolution="resolution"
+              :zoom="zoom"
+              :element="element"
+              :elementSelected="eleSelected"
+              @getElementSelected="getElementSelected"
+              @clearElementSelected="clearElementSelected"
+              @delElementSelected="delElementSelected"
+            ></LayoutItem>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import "animate.css";
+import "../assets/css/custom.css";
+export default {
+  name: "inside",
+  data() {
+    return {
+      appid: "",
+      eleid: 0,
+      timer: null,
+      isCanvasColorBlack: false,
+      isCollapsed: false,
+      isExportable: false,
+      selectData: "720P",
+      resolution: "720P",
+      zoom: 0.66666666,
+      mag: 1,
+      data: {},
+      elements: [],
+      eleSelected: {},
+      lastIndex: 1,
+      newText: "",
+      fontFamily: [
+        "Helvetica",
+        "SimSun",
+        "SumHei",
+        "Microsoft YaHei",
+        "YouYuan",
+        "sans-serif"
+      ],
+      switchStatus: false,
+      imageUrl: "",
+      token: {},
+      // 七牛云的上传地址，根据自己所在地区选择，我这里是华南区
+      domain: "https://upload.qiniup.com",
+      // 这是七牛云空间的外链默认域名
+      qiniuaddr: "prvz33yaw.bkt.clouddn.com"
+    };
+  },
+  sockets: {
+    connect() {
+      console.log("socket connected");
+    },
+    customEmit(val) {
+      console.log(
+        'this method was fired by the socket server. eg: io.emit("customEmit", data)'
+      );
+    }
+  },
+  beforeCreate() {},
+  created() {
+    this.$Loading.start();
+    // 获取 appid
+    this.appid = this.$utils.parseUrl("appid");
+    if (this.appid == "" || this.appid == undefined) {
+      this.$Message.error("No user");
+      console.log(response.data.msg);
+      this.$Loading.finish();
+      this.$router.push({
+        path: "/error",
+        query: { msg: "No user" }
+      });
+    }
+    let _this = this;
+    this.$axios
+      .post("https://editor.guangdianyun.tv:3006/getData", {
+        appid: _this.appid,
+        type: "editor"
+      })
+      .then(function(response) {
+        if (response.data.code == "1") {
+          _this.$Message.success("Init Success");
+          console.log(response.data.msg);
+          _this.elements = response.data.data.elements;
+          _this.lastIndex = response.data.data.lastIndex;
+          _this.$Loading.finish();
+        } else if (response.data.code == "0") {
+        } else {
+          _this.$Message.error("Init Failed");
+          _this.$Loading.error();
+        }
+      })
+      .catch(function(error) {
+        _this.$Message.error("Init Error");
+        _this.$Loading.error();
+      });
+  },
+  mounted() {
+    let socketObj = { appid: this.appid, type: "editor" };
+    this.$socket.emit("online", socketObj);
+
+    this.$socket.on("onceUpdate", () => {
+      this.updateDataOnce();
+    });
+
+    this.$watch("elements", this.updateData, { deep: true });
+
+    // auto-keep
+    // this.timer = setInterval(() => {
+    //   this.exportJSON("auto save");
+    // }, 120000);
+  },
+  computed: {
+    menuitemClasses: () => {
+      return ["menu-item", this.isCollapsed ? "collapsed-menu" : ""];
+    },
+    filterOfImg() {
+      return this.elements.filter(item => item.type == "img");
+    },
+    filterOfWord() {
+      return this.elements.filter(item => item.type == "word");
+    },
+    filterOfLayout() {
+      return this.elements.filter(item => item.type == "layout");
+    }
+  },
+  methods: {
+    clearStageTest() {
+      this.$axios
+        .post("https://editor.guangdianyun.tv:3006/clear", {
+          appid: this.appid
+        })
+        .then((response) =>{
+          if (response.data.code == "1") {
+            this.$Message.success("Cleared");
+            this.$Loading.finish();
+          } else {
+            this.$Message.error("Clear Failed");
+            this.$Loading.error();
+          }
+        })
+        .catch(err => {
+          this.$Message.error("Clear Error");
+        });
+    },
+    onceUpdataTest() {
+      this.$axios
+        .post("https://editor.guangdianyun.tv:3006/apply", {
+          appid: this.appid,
+        })
+        .then((response) =>{
+          if (response.data.code == "1") {
+            this.$Message.success("Applied");
+            this.$Loading.finish();
+          } else {
+            this.$Message.error("Apply Failed");
+            this.$Loading.error();
+          }
+        })
+        .catch(function(error) {
+          this.$Message.error("Apply Error");
+          this.$Loading.error();
+        });
+    },
+    upqiniu(file) {
+      console.log(file);
+      const config = {
+        headers: { "Content-Type": "multipart/form-data" }
+      };
+      let filetype = "";
+      if (file.type === "image/png") {
+        filetype = "png";
+      } else {
+        filetype = "jpg";
+      }
+      // 重命名要上传的文件
+      const Name = file.name;
+      const suffix = Name.substr(Name.indexOf(".")); // 文件后缀
+      const keyname = "images-oss_" + Date.parse(new Date()) + suffix; // 组成新文件名
+
+      // 从后端获取上传凭证token
+      this.$axios.get("https://editor.guangdianyun.tv:3006/token").then(res => {
+        console.log(res);
+        const formdata = new FormData();
+        formdata.append("file", file);
+        formdata.append("token", res.data);
+        formdata.append("key", keyname);
+        // 获取到凭证之后再将文件上传到七牛云空间
+        this.$axios
+          .post(this.domain, formdata, config)
+          .then(res => {
+            this.imageUrl = "http://" + this.qiniuaddr + "/" + res.data.key;
+            //this.$Message.success("Upload Success");
+            console.log(res);
+            this.addElement(this.imageUrl, "img");
+          })
+          .catch(err => {
+            console.log(err);
+            //this.$Message.error("Upload Error");
+          });
+      });
+    },
+    handleFormatError(file) {
+      this.$Notice.warning({
+        title: "The file format is incorrect",
+        desc:
+          "File format of " +
+          file.name +
+          " is incorrect, please select jpg or png."
+      });
+    },
+    handleMaxSize(file) {
+      this.$Notice.warning({
+        title: "Exceeding file size limit",
+        desc: "File  " + file.name + " is too large, no more than 2M."
+      });
+    },
+    handleBeforeUpload(file) {
+      const isJPG = file.type === "image/jpeg" || file.type === "image/png";
+      const isLt2M = file.size / 1024 / 1024 < 2;
+      if (!isJPG) {
+        console.log("Type Error");
+        //this.$message.error("Type Error");
+      }
+      if (!isLt2M) {
+        console.log("Volume Error");
+        //this.$message.error("Volume Error");
+      }
+      this.upqiniu(file);
+      return false; // 阻止Upload的默认上传
+    },
+    addWord() {
+      if (this.newText) this.addElement(this.newText, "word");
+    },
+    changeTextAlign(param) {
+      this.eleSelected.textAlign = param;
+    },
+    changeFontSize(property, op, step, limit) {
+      if (op == "reduce" && this.eleSelected[property] > 1) {
+        this.eleSelected[property] = Number(
+          Number(this.eleSelected[property]) - step
+        ).toFixed(limit);
+      } else if (op == "increase") {
+        this.eleSelected[property] = Number(
+          Number(this.eleSelected[property]) + step
+        ).toFixed(limit);
+      } else {
+        this.$Message.warning("Wrong " + property);
+      }
+    },
+    changeFontWeight(status) {
+      if (status) {
+        this.eleSelected.fontWeight = "bold";
+      } else {
+        this.eleSelected.fontWeight = "normal";
+      }
+      //console.log(this.elementSelected.lineWeight);
+    },
+    delElementSelected(ele) {
+      this.elements.splice(
+        this.elements.findIndex(item => item.id === ele.id),
+        1
+      );
+    },
+    getElementSelected(ele) {
+      this.eleSelected = ele;
+      console.log(this.eleSelected);
+    },
+    clearElementSelected() {
+      this.eleSelected = {
+        id: 0,
+        width: 0,
+        height: 0,
+        top: 0,
+        left: 0,
+        type: null,
+        imgSrc: "N/A",
+        alpha: 100,
+        index: 0
+      };
+    },
+    saveData() {
+      this.$Loading.start();
+      let _this = this;
+      this.$axios
+        .post("https://editor.guangdianyun.tv:3006/setData", {
+          appid: _this.appid,
+          data: { elements: _this.elements, lastIndex: _this.lastIndex }
+        })
+        .then(function(response) {
+          console.log(response);
+          if (response.data.code == "1") {
+            _this.$Message.success("Save OK");
+            _this.$Loading.finish();
+          } else {
+            _this.$Message.error("Save Failed");
+            _this.$Loading.error();
+          }
+        })
+        .catch(function(error) {
+          _this.$Message.error("Save Error");
+          _this.$Loading.error();
+        });
+    },
+    updateData() {
+      // 输出至 Preview
+      let socketData = {
+        Resolution: this.resolution,
+        Mag: this.mag,
+        Objs: this.elements
+      };
+      this.$socket.emit("sendMsgPre", {
+        appid: this.appid,
+        data: socketData
+      });
+    },
+    updateDataOnce() {
+      // 输出至 Stage & Preview
+      let socketData = {
+        Resolution: this.resolution,
+        Mag: this.mag,
+        Objs: this.elements
+      };
+      this.$socket.emit("sendMsgPre", {
+        appid: this.appid,
+        data: socketData
+      });
+      this.$socket.emit("sendMsg", {
+        appid: this.appid,
+        data: socketData
+      });
+    },
+    addElement(param, type) {
+      let newObj = {};
+      if (type == "img") {
+        let image = new Image();
+        image.src = param;
+        image.onload = () => {
+          newObj = {
+            id: this.lastIndex,
+            width: image.width,
+            height: image.height,
+            top: 0,
+            left: 0,
+            title: "",
+            type: type,
+            imgSrc: param,
+            alpha: 100,
+            index: 1,
+            visible: true
+          };
+          this.lastIndex++;
+          this.elements.push(newObj);
+          image = null;
+        };
+      } else if (type == "word") {
+        newObj = {
+          id: this.lastIndex,
+          width: 200,
+          top: 0,
+          left: 0,
+          title: "",
+          lineHeight: 1.5,
+          type: type,
+          text: param,
+          color: "#ffffff",
+          textAlign: "left",
+          fontSize: 28,
+          fontWeight: "normal",
+          fontFamily: "Helvetica",
+          alpha: 100,
+          index: 1,
+          visible: true,
+          playing: true,
+          tranform: 0,
+          animation: "",
+          loop: false,
+          duration: 1,
+          delay: 0,
+          marquee_pattern: "normal",
+          marquee_duration: 10
+        };
+        this.lastIndex++;
+        this.elements.push(newObj);
+      } else if (type == "component") {
+        if (param == "default_1") {
+          newObj = {
+            id: this.lastIndex,
+            width: 880,
+            height: 177,
+            top: 550,
+            left: 22,
+            title: "",
+            type: "layout",
+            model: "sub",
+            alpha: 100,
+            index: 2,
+            locked: true,
+            visible: true,
+            children: [
+              {
+                id: this.lastIndex + 1,
+                width: 815,
+                height: 135,
+                top: -2,
+                left: 0,
+                title: "",
+                type: "img",
+                imgSrc:
+                  "http://prvz33yaw.bkt.clouddn.com/images-oss_title_1.png",
+                alpha: 100,
+                index: 3,
+                visible: true,
+                duration: 0.1,
+                marquee_duration: 1
+              },
+              {
+                id: this.lastIndex + 2,
+                width: 158,
+                top: 34,
+                left: 74,
+                title: "",
+                lineHeight: 1.5,
+                type: "word",
+                text: "组件测试",
+                color: "#FFFFFF",
+                textAlign: "left",
+                fontSize: "36",
+                fontWeight: "bold",
+                fontFamily: "Helvetica",
+                alpha: 100,
+                index: 4,
+                visible: true,
+                playing: true,
+                tranform: 0,
+                animation: "",
+                loop: false,
+                duration: 1,
+                delay: 0,
+                marquee_pattern: "normal",
+                marquee_duration: 10
+              },
+              {
+                id: this.lastIndex + 3,
+                width: 200,
+                top: 83,
+                left: 76,
+                title: "",
+                lineHeight: 1.5,
+                type: "word",
+                text: "组件测试副标题",
+                color: "#FFFFFF",
+                textAlign: "left",
+                fontSize: "24",
+                fontWeight: "normal",
+                fontFamily: "Helvetica",
+                alpha: 100,
+                index: 4,
+                visible: true,
+                playing: true,
+                tranform: 0,
+                animation: "",
+                loop: false,
+                duration: 1,
+                delay: 0,
+                marquee_pattern: "normal",
+                marquee_duration: 10
+              }
+            ],
+            duration: 0.1,
+            marquee_duration: 1
+          };
+          this.lastIndex = this.lastIndex + 4;
+          this.elements.push(newObj);
+        } else if (param == "default_2") {
+          newObj = {
+            id: this.lastIndex,
+            width: 880,
+            height: 177,
+            top: 550,
+            left: 22,
+            title: "",
+            type: "layout",
+            model: "sub",
+            alpha: 100,
+            index: 2,
+            locked: true,
+            visible: true,
+            children: [
+              {
+                id: this.lastIndex + 1,
+                width: 815,
+                height: 135,
+                top: -2,
+                left: 0,
+                title: "",
+                type: "img",
+                imgSrc:
+                  "http://prvz33yaw.bkt.clouddn.com/images-oss_title_2.png",
+                alpha: 100,
+                index: 3,
+                visible: true,
+                duration: 0.1,
+                marquee_duration: 1
+              },
+              {
+                id: this.lastIndex + 2,
+                width: 158,
+                top: 17,
+                left: 32,
+                title: "",
+                lineHeight: 1.5,
+                type: "word",
+                text: "组件测试",
+                color: "#FFFFFF",
+                textAlign: "left",
+                fontSize: "36",
+                fontWeight: "bold",
+                fontFamily: "Helvetica",
+                alpha: 100,
+                index: 4,
+                visible: true,
+                playing: true,
+                tranform: 0,
+                animation: "",
+                loop: false,
+                duration: 1,
+                delay: 0,
+                marquee_pattern: "normal",
+                marquee_duration: 10
+              },
+              {
+                id: this.lastIndex + 3,
+                width: 200,
+                top: 97,
+                left: 32,
+                title: "",
+                lineHeight: 1.5,
+                type: "word",
+                text: "组件测试副标题",
+                color: "#000000",
+                textAlign: "left",
+                fontSize: "24",
+                fontWeight: "normal",
+                fontFamily: "Helvetica",
+                alpha: 100,
+                index: 4,
+                visible: true,
+                playing: true,
+                tranform: 0,
+                animation: "",
+                loop: false,
+                duration: 1,
+                delay: 0,
+                marquee_pattern: "normal",
+                marquee_duration: 10
+              }
+            ],
+            duration: 0.1,
+            marquee_duration: 1
+          };
+          this.lastIndex = this.lastIndex + 4;
+          this.elements.push(newObj);
+        } else if (param == "default_3") {
+          newObj = {
+            id: this.lastIndex,
+            width: 880,
+            height: 150,
+            top: 550,
+            left: 22,
+            title: "",
+            type: "layout",
+            model: "sub",
+            alpha: 100,
+            index: 2,
+            locked: true,
+            visible: true,
+            children: [
+              {
+                id: this.lastIndex + 1,
+                width: 815,
+                height: 135,
+                top: -2,
+                left: 0,
+                title: "",
+                type: "img",
+                imgSrc:
+                  "http://prvz33yaw.bkt.clouddn.com/images-oss_title_3.png",
+                alpha: 100,
+                index: 3,
+                visible: true,
+                duration: 0.1,
+                marquee_duration: 1
+              },
+              {
+                id: this.lastIndex + 2,
+                width: 158,
+                top: 49,
+                left: 73,
+                title: "",
+                lineHeight: 1.5,
+                type: "word",
+                text: "组件测试",
+                color: "#FFFFFF",
+                textAlign: "left",
+                fontSize: "36",
+                fontWeight: "bold",
+                fontFamily: "Helvetica",
+                alpha: 100,
+                index: 4,
+                visible: true,
+                playing: true,
+                tranform: 0,
+                animation: "",
+                loop: false,
+                duration: 1,
+                delay: 0,
+                marquee_pattern: "normal",
+                marquee_duration: 10
+              },
+              {
+                id: this.lastIndex + 3,
+                width: 200,
+                top: -4,
+                left: 76,
+                title: "",
+                lineHeight: 1.5,
+                type: "word",
+                text: "组件测试副标题",
+                color: "#FFFFFF",
+                textAlign: "left",
+                fontSize: "24",
+                fontWeight: "normal",
+                fontFamily: "Helvetica",
+                alpha: 100,
+                index: 4,
+                visible: true,
+                playing: true,
+                tranform: 0,
+                animation: "",
+                loop: false,
+                duration: 1,
+                delay: 0,
+                marquee_pattern: "normal",
+                marquee_duration: 10
+              }
+            ],
+            duration: 0.1,
+            marquee_duration: 1
+          };
+          this.lastIndex = this.lastIndex + 4;
+          this.elements.push(newObj);
+        } else if (param == "default_4") {
+          newObj = {
+            id: this.lastIndex,
+            width: 880,
+            height: 177,
+            top: 541,
+            left: 207,
+            title: "",
+            type: "layout",
+            model: "score",
+            alpha: 100,
+            index: 2,
+            locked: true,
+            visible: true,
+            children: [
+              {
+                id: this.lastIndex + 1,
+                width: "796",
+                height: "120",
+                top: 29,
+                left: 42,
+                title: "",
+                type: "img",
+                imgSrc:
+                  "http://prvz33yaw.bkt.clouddn.com/images-oss_1559528456000.png",
+                alpha: 100,
+                index: 1,
+                visible: true,
+                duration: 0.1,
+                marquee_duration: 1
+              },
+              {
+                id: this.lastIndex + 2,
+                width: 35,
+                top: 56,
+                left: 375,
+                title: "",
+                lineHeight: 1.5,
+                type: "word",
+                text: "1",
+                color: "#FFFFFF",
+                textAlign: "center",
+                fontSize: "46",
+                fontWeight: "normal",
+                fontFamily: "Helvetica",
+                alpha: 100,
+                index: 1,
+                visible: true,
+                playing: true,
+                tranform: 0,
+                animation: "",
+                loop: false,
+                duration: 1,
+                delay: 0,
+                marquee_pattern: "normal",
+                marquee_duration: 10
+              },
+              {
+                id: this.lastIndex + 3,
+                width: "35",
+                top: 57,
+                left: 469,
+                title: "",
+                lineHeight: 1.5,
+                type: "word",
+                text: "1",
+                color: "#FFFFFF",
+                textAlign: "center",
+                fontSize: "46",
+                fontWeight: "normal",
+                fontFamily: "Helvetica",
+                alpha: 100,
+                index: 1,
+                visible: true,
+                playing: true,
+                tranform: 0,
+                animation: "",
+                loop: false,
+                duration: 1,
+                delay: 0,
+                marquee_pattern: "normal",
+                marquee_duration: 10
+              },
+              {
+                id: this.lastIndex + 4,
+                width: "145",
+                top: 70,
+                left: 120,
+                title: "",
+                lineHeight: 1.5,
+                type: "word",
+                text: "队伍 1",
+                color: "#FFFFFF",
+                textAlign: "center",
+                fontSize: 28,
+                fontWeight: "bold",
+                fontFamily: "Helvetica",
+                alpha: 100,
+                index: 1,
+                visible: true,
+                playing: true,
+                tranform: 0,
+                animation: "",
+                loop: false,
+                duration: 1,
+                delay: 0,
+                marquee_pattern: "normal",
+                marquee_duration: 10
+              },
+              {
+                id: this.lastIndex + 5,
+                width: 145,
+                top: 70,
+                left: 618,
+                title: "",
+                lineHeight: 1.5,
+                type: "word",
+                text: "队伍 2",
+                color: "#FFFFFF",
+                textAlign: "center",
+                fontSize: 28,
+                fontWeight: "bold",
+                fontFamily: "Helvetica",
+                alpha: 100,
+                index: 1,
+                visible: true,
+                playing: true,
+                tranform: 0,
+                animation: "",
+                loop: false,
+                duration: 1,
+                delay: 0,
+                marquee_pattern: "normal",
+                marquee_duration: 10
+              }
+            ],
+            duration: 0.1,
+            marquee_duration: 1
+          };
+          this.lastIndex = this.lastIndex + 6;
+          this.elements.push(newObj);
+        }
+      }
+    }
+  },
+  watch: {
+    "eleSelected.fontWeight": {
+      handler(newValue, oldValue) {
+        if (newValue == "bold") this.switchStatus = true;
+        else this.switchStatus = false;
+      },
+      deep: true,
+      immediate: true
+    },
+    selectData: {
+      handler(newValue, oldValue) {
+        if (newValue == "480P") {
+          this.zoom = 1;
+        } else if (newValue == "720P") {
+          this.zoom = 0.66666666;
+        } else if (newValue == "1080P") {
+          this.zoom = 0.44444444;
+        } else {
+          this.zoom = 1;
+        }
+        this.resolution = newValue;
+      },
+      immediate: true
+    }
+  }
+};
+</script>
+
+<style lang="scss" scoped>
+.simpleCanvas {
+  width: 853px;
+  height: 480px;
+  zoom: 1;
+}
+
+.normalCanvas {
+  width: 1280px;
+  height: 720px;
+  zoom: 0.66666666;
+}
+
+.extendCanvas {
+  width: 1920px;
+  height: 1080px;
+  zoom: 0.44444444;
+}
+
+.inside {
+  width: 100%;
+  height: 100%;
+  font-size: 19px;
+  font-family: "Microsoft YaHei", 微软雅黑, Tahoma, Geneva, sans-serif;
+  color: white;
+  background-color: #2f353b;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  overflow: hidden;
+
+  .inside-header {
+    width: 100%;
+    height: 70px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    background-color: #212326;
+    box-shadow: 0 0px 15px #212326;
+    border-bottom: 3px solid #1db5ad;
+    z-index: 2;
+
+    .inside-header-info {
+      position: absolute;
+      left: 20px;
+      display: flex;
+      justify-content: flex-start;
+      align-items: flex-end;
+
+      .inside-header-info-main {
+        margin-right: 15px;
+        font-size: 28px;
+      }
+
+      .inside-header-info-sub {
+        margin-right: 10px;
+        margin-bottom: 2px;
+        font-size: 14px;
+        color: #1db5ad;
+      }
+
+      .ivu-tag {
+        width: 40px;
+        height: 15px;
+        margin-bottom: 5px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+    }
+
+    .inside-header-controller {
+      position: absolute;
+      right: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+
+      .inside-header-save {
+        width: 100px;
+        height: 35px;
+        margin-left: 5px;
+        margin-right: 5px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: #2f353b;
+        cursor: pointer;
+
+        span {
+          font-size: 14px;
+          //color: white;
+          color: #1db5ad;
+        }
+      }
+    }
+  }
+
+  .inside-content {
+    flex-grow: 1;
+    width: 100%;
+    height: 100%;
+    background-color: #3f464d;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    .inside-sidebar {
+      width: 300px;
+      min-width: 300px;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      align-items: center;
+      box-shadow: 0 0px 12px #2f353b;
+      background-color: #2f353b;
+      overflow-x: hidden;
+      overflow-y: auto;
+      box-sizing: border-box;
+      z-index: 1;
+
+      &::-webkit-scrollbar {
+        display: none;
+      }
+
+      .ivu-upload {
+        .inside-sidebar-button {
+          width: 270px;
+          height: 25px;
+          margin-bottom: 8px;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          border-left: 3px solid #1db5ad;
+          background-color: #292c30;
+          cursor: pointer;
+
+          span {
+            font-size: 14px;
+          }
+        }
+      }
+
+      .ivu-poptip {
+        width: 100%;
+
+        .ivu-poptip-rel {
+          .inside-sidebar-button {
+            width: 270px;
+            height: 25px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-left: 3px solid #1db5ad;
+            background-color: #292c30;
+            cursor: pointer;
+
+            span {
+              font-size: 14px;
+            }
+          }
+        }
+      }
+
+      .inside-sidebar-divider {
+        width: 100%;
+        height: 30px;
+        margin-bottom: 8px;
+        font-size: 16px;
+        background-color: #212326;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+    }
+
+    .inside-editor {
+      flex-grow: 1;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+
+      .inside-editor-toolbar {
+        width: 100%;
+        height: 80px;
+        margin-bottom: 10px;
+        display: flex;
+        justify-content: center;
+        align-items: flex-end;
+        background-color: #3f464d;
+        //border-bottom: 1px solid #2123267e;
+
+        .inside-editor-toolbar-tools {
+          width: 853px;
+          height: 60px;
+          margin: 0;
+          padding: 0;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          border: 0;
+          background: #212326;
+          box-shadow: 0 0px 15px #212326;
+          border-radius: 2px;
+
+          .inside-editor-toolbar-tools-content {
+            height: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+
+            .inside-editor-toolbar-tools-style {
+              display: flex;
+              justify-content: flex-start;
+              align-items: center;
+              margin-left: 5px;
+              margin-right: 5px;
+
+              span {
+                width: 60px;
+                font-size: 14px;
+              }
+            }
+          }
+        }
+      }
+
+      .inside-editor-content {
+        flex-grow: 1;
+        width: 100%;
+        margin-top: 10px;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        z-index: 1;
+
+        .canvas {
+          margin: 0;
+          padding: 0;
+          border: 0;
+          background: #212326;
+          box-shadow: 0 0px 12px #212326;
+          border-radius: 2px;
+          position: relative;
+          overflow: hidden;
+          z-index: 0;
+
+          .element {
+            position: absolute;
+          }
+        }
+      }
+    }
+  }
+}
+</style>

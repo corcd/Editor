@@ -12,30 +12,51 @@
             @clearElementSelected="clearElementSelected"
             @delElementSelected="delElementSelected"
           ></LayerPicker>
-          <div class="control">
-            <Affix :offset-bottom="40">
-              <ButtonGroup>
-                <Button type="primary" @click="indexUpward">
-                  <Icon type="ios-arrow-up"/>Up
-                </Button>
-                <Button type="primary" @click="indexDownward">
-                  Down
-                  <Icon type="ios-arrow-down"/>
-                </Button>
-              </ButtonGroup>
-            </Affix>
-          </div>
         </div>
+        <!-- <div class="layer-control">
+          <ButtonGroup>
+            <Button type="primary" @click="indexUpward">
+              <Icon type="ios-arrow-up"/>Up
+            </Button>
+            <Button type="primary" @click="indexDownward">
+              Down
+              <Icon type="ios-arrow-down"/>
+            </Button>
+          </ButtonGroup>
+        </div>-->
       </TabPane>
       <TabPane label="Layout">
         <div class="layout-container">
           <Button type="primary" style="width: 90%">Custom</Button>
+          <Divider>Default</Divider>
+          <Divider orientation="left" style="font-size: 12px; color:#878E9B">Title Bar</Divider>
           <LayoutPicker
-            :imgSrc="'http://prvz33yaw.bkt.clouddn.com/%E6%A0%87%E9%A2%98%E6%A0%8F.png'"
-            :title="'默认标题'"
-            :type="'default'"
+            :imgSrc="'http://prvz33yaw.bkt.clouddn.com/images-oss_title_1.png'"
+            :title="'预设标题样式 1'"
+            :type="'default_1'"
             @elementAdd="elementAdd"
           ></LayoutPicker>
+          <LayoutPicker
+            :imgSrc="'http://prvz33yaw.bkt.clouddn.com/images-oss_title_2.png'"
+            :adaptivePreview="true"
+            :title="'预设标题样式 2'"
+            :type="'default_2'"
+            @elementAdd="elementAdd"
+          ></LayoutPicker>
+          <LayoutPicker
+            :imgSrc="'http://prvz33yaw.bkt.clouddn.com/images-oss_title_3.png'"
+            :title="'预设标题样式 3'"
+            :type="'default_3'"
+            @elementAdd="elementAdd"
+          ></LayoutPicker>
+          <Divider orientation="left" style="font-size: 12px; color:#878E9B">Score Panel</Divider>
+          <LayoutPicker
+            :imgSrc="'http://prvz33yaw.bkt.clouddn.com/images-oss_1559528456000.png'"
+            :title="'预设比分样式 1'"
+            :type="'default_4'"
+            @elementAdd="elementAdd"
+          ></LayoutPicker>
+          <Divider>Custom</Divider>
         </div>
       </TabPane>
       <TabPane label="Animation">
@@ -266,40 +287,49 @@ export default {
   background: #fff;
   position: relative;
 
-  .ivu-tabs {
+  .ivu-tabs,
+  .ivu-tabs-mini {
     width: 100%;
     height: 100%;
 
-    .ivu-tabs-bar[style] {
-      width: 100%;
-      margin-bottom: 10px !important;
-    }
+    // .ivu-tabs-bar[style] {
+    //   width: 100%;
+    //   margin-bottom: 10px !important;
+    // }
 
-    .ivu-tabs-content {
+    .ivu-tabs-content,
+    .ivu-tabs-content-animated {
       width: 100%;
-      height: 100%;
+      max-height: 100%;
       //overflow-y: auto;
 
       .ivu-tabs-tabpane {
         width: 100%;
         height: 100%;
-        //max-height: 70vh;
-        //margin-top: 10px;
+        position: relative;
         display: flex;
         flex-direction: column;
         justify-content: flex-start;
         align-items: center;
-        overflow-y: auto;
+        overflow: hidden;
 
         .layer-container {
           width: 90%;
+          max-height: 80vh;
           margin-top: 0px;
           padding: 2px;
+          //padding-bottom: 150px;
+          overflow-x: hidden;
+          overflow-y: scroll;
+
+          &::-webkit-scrollbar {
+            display: none;
+          }
         }
 
-        .control {
-          margin-right: 0;
-          margin-top: 20px;
+        .layer-control {
+          width: 100%;
+          height: 100px;
           display: flex;
           justify-content: center;
           align-items: center;
@@ -307,7 +337,7 @@ export default {
 
         .layout-container {
           width: 90%;
-          margin-top: 10px;
+          margin-top: 0px;
           overflow-y: auto;
         }
 

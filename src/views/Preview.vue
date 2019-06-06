@@ -11,14 +11,16 @@
         alt="img"
         draggable="false"
         v-for="element in filterOfImg"
+        v-show="element.visible"
         :key="element.id"
         :src="element.imgSrc"
         :style="{'top':element.top+'px','left':element.left+'px','width':element.width+'px','height':element.height+'px','opacity':(element.alpha/100.0),'z-index':element.index}"
       >
       <section
         class="showWord"
-        v-for="element in filterOfWord"
         draggable="false"
+        v-for="element in filterOfWord"
+        v-show="element.visible"
         :key="element.id"
         :style="{'top':element.top+'px','left':element.left+'px','z-index':element.index}"
       >
@@ -29,6 +31,7 @@
 
       <aside
         v-for="element in filterOfLayout"
+        v-show="element.visible"
         :key="element.id"
         :style="{'top':element.top+'px','left':element.left+'px','z-index':element.index}"
       >
@@ -37,14 +40,16 @@
           alt="img"
           draggable="false"
           v-for="item in filterOfChildrenImg(element)"
+          v-show="item.visible"
           :key="item.id"
           :src="item.imgSrc"
           :style="{'top':item.top+'px','left':item.left+'px','width':item.width+'px','height':item.height+'px','opacity':(item.alpha/100.0),'z-index':item.index}"
         >
         <section
           class="showWord"
-          v-for="item in filterOfChildrenWord(element)"
           draggable="false"
+          v-for="item in filterOfChildrenWord(element)"
+          v-show="item.visible"
           :key="item.id"
           :style="{'top':item.top+'px','left':item.left+'px','z-index':item.index}"
         >
@@ -58,6 +63,8 @@
 </template>
 
 <script>
+import "animate.css";
+import "../assets/css/custom.css";
 export default {
   name: "preview",
   components: {},
@@ -66,7 +73,8 @@ export default {
       appid: "",
       stageResolution: "720P",
       coefficient: 1,
-      elements: []
+      elements: [],
+      previewDataBackUp: []
     };
   },
   sockets: {
@@ -95,12 +103,12 @@ export default {
     let socketObj = { appid: this.appid, type: "preview" };
     this.$socket.emit("online", socketObj);
 
-    this.$socket.on("clearStage", () => {
-      this.$nextTick(() => {
-        this.elements = [];
-        console.log(this.elements);
-      });
-    });
+    // this.$socket.on("clearStage", () => {
+    //   this.$nextTick(() => {
+    //     this.elements = [];
+    //     console.log(this.elements);
+    //   });
+    // });
 
     this.$socket.on("receiveMsgPre", data => {
       console.log(data);
@@ -110,8 +118,12 @@ export default {
       // else if (data.Resolution == "720P") coefficient = 1.5;
       // else if (data.Resolution == "1080P") coefficient = 1.5 * 1.5;
       // else coefficient = 1;
+      if (this.previewDataBackUp === data.Objs) {
+      } else {
+        this.previewDataBackUp = data.Objs;
+        this.elements = data.Objs;
+      }
 
-      this.elements = data.Objs;
       // this.$nextTick(() => {
       //   this.elements = data.Objs;
       // });
@@ -164,28 +176,24 @@ export default {
 
 <style lang="scss" scoped>
 .simpleCanvas {
-  // width: 853px;
-  // height: 480px;
+  width: 853px;
+  height: 480px;
 }
 
 .normalCanvas {
-  // width: 1280px;
-  // height: 720px;
+  width: 1280px;
+  height: 720px;
 }
 
 .extendCanvas {
-  // width: 1920px;
-  // height: 1080px;
+  width: 1920px;
+  height: 1080px;
 }
 
 .preview {
-  width: 100vw;
-  height: 100vh;
   background-color: transparent !important;
 
   .showCanvas {
-    width: 100%;
-    height: 100%;
     margin: 0;
     padding: 0;
     background-color: transparent;

@@ -28,20 +28,21 @@ Vue.prototype.$utils = utils;
 
 router.beforeEach((to, from, next) => {
   iView.LoadingBar.start();
-  Axios.get("data.json")
-    .then(response => {
-      let res = JSON.parse(JSON.stringify(response));
-      if (res.status == 200) {
-        //console.log(res.data);
-        store.replaceState(res.data);
-        console.log(store.state);
-      }
-      next();
-    })
-    .catch(err => {
-      console.log(err.message);
-      next();
-    });
+  // Axios.get("data.json")
+  //   .then(response => {
+  //     let res = JSON.parse(JSON.stringify(response));
+  //     if (res.status == 200) {
+  //       //console.log(res.data);
+  //       store.replaceState(res.data);
+  //       console.log(store.state);
+  //     }
+  //     next();
+  //   })
+  //   .catch(err => {
+  //     console.log(err.message);
+  //     next();
+  //   });
+  next();
 });
 
 router.afterEach(route => {

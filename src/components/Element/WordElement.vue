@@ -100,31 +100,35 @@ export default {
     },
     keyboard(event) {
       event.preventDefault();
-      event.stopPropagation();
-      if (event.keyCode == 13) {
-        this.$Message.info("Enter");
-      } else if (event.keyCode == 8) {
-        //this.$Message.info("BackSpace");
-        this.delElementSelected(this.element);
-      } else if (event.keyCode == 46) {
-        //this.$Message.info("Delete");
-        this.delElementSelected(this.element);
-      } else if (event.keyCode == 37) {
-        // 左
-        this.element.left--;
-      } else if (event.keyCode == 38) {
-        // 上
-        this.element.top--;
-      } else if (event.keyCode == 39) {
-        // 右
-        this.element.left++;
-      } else if (event.keyCode == 40) {
-        // 下
-        this.element.top++;
+      if (this.locked == false) {
+        event.stopPropagation();
+        if (event.keyCode == 13) {
+          this.$Message.info("Enter");
+        } else if (event.keyCode == 8) {
+          //this.$Message.info("BackSpace");
+          this.delElementSelected(this.element);
+        } else if (event.keyCode == 46) {
+          //this.$Message.info("Delete");
+          this.delElementSelected(this.element);
+        } else if (event.keyCode == 37) {
+          // 左
+          this.element.left--;
+        } else if (event.keyCode == 38) {
+          // 上
+          this.element.top--;
+        } else if (event.keyCode == 39) {
+          // 右
+          this.element.left++;
+        } else if (event.keyCode == 40) {
+          // 下
+          this.element.top++;
+        }
       }
     },
     delElementSelected(ele) {
-      this.$emit("delElementSelected", ele);
+      if (this.locked == false) {
+        this.$emit("delElementSelected", ele);
+      }
     },
     showEditor() {
       //console.log(this.element);

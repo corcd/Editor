@@ -9,6 +9,7 @@ import LayerPicker from "./LayerPicker";
 import LayoutPicker from "./LayoutPicker";
 import LayoutItem from "./LayoutItem";
 import Editor from "./Editor";
+import ComponentPicker from "./Inside/ComponentPicker";
 
 const components = {
   StatusBar,
@@ -21,7 +22,8 @@ const components = {
   LayerPicker,
   LayoutPicker,
   LayoutItem,
-  Editor
+  Editor,
+  ComponentPicker
 };
 
 const install = (Vue, options = {}) => {

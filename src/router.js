@@ -5,6 +5,7 @@ import Stage from "./views/Stage.vue";
 import Preview from "./views/Preview.vue";
 import Error from "./views/Error.vue";
 import Mini from "./views/Mini.vue";
+import Inside from "./views/Inside.vue";
 
 Vue.use(Router);
 
@@ -50,6 +51,14 @@ export default new Router({
       component: Mini,
       meta: {
         title: "Mini"
+      }
+    },
+    {
+      path: "/inside",
+      name: "inside",
+      component: Inside,
+      meta: {
+        title: "Inside"
       }
     }
   ]

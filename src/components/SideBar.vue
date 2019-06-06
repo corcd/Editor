@@ -21,7 +21,11 @@
         </a>
       </div>
       <FormItem label="Height:" style="margin-top: 0 !important;">
-        <Input v-model="elementSelected.height" placeholder="0" :disabled="elementSelected.type=='word'">
+        <Input
+          v-model="elementSelected.height"
+          placeholder="0"
+          :disabled="elementSelected.type=='word'"
+        >
           <span slot="append">px</span>
         </Input>
       </FormItem>
@@ -40,19 +44,38 @@
           <Option v-for="item in fontFamily" :key="item" :label="item" :value="item"></Option>
         </Select>
       </FormItem>
-      <FormItem label="Font:" v-if="elementSelected.type=='word'">
+      <FormItem label="" v-if="elementSelected.type=='word'">
         <ColorPicker v-model="elementSelected.color" style="float: left" recommend></ColorPicker>
+        <ButtonGroup class="textAlignControl">
+          <Button :disabled="elementSelected.textAlign == 'left'" @click="changeTextAlign('left')">L</Button>
+          <Button
+            :disabled="elementSelected.textAlign == 'center'"
+            @click="changeTextAlign('center')"
+          >C</Button>
+          <Button
+            :disabled="elementSelected.textAlign == 'right'"
+            @click="changeTextAlign('right')"
+          >R</Button>
+        </ButtonGroup>
       </FormItem>
       <FormItem label="FontSize:" v-show="elementSelected.type=='word'">
         <Input v-model="elementSelected.fontSize" placeholder="0">
-          <Button slot="prepend" icon="md-remove"></Button>
-          <Button slot="append" icon="md-add"></Button>
+          <Button slot="prepend" icon="md-remove" @click="changeFontSize('fontSize','reduce',1,0)"></Button>
+          <Button slot="append" icon="md-add" @click="changeFontSize('fontSize','increase',1,0)"></Button>
         </Input>
       </FormItem>
       <FormItem label="LineHeight:" v-show="elementSelected.type=='word'">
         <Input v-model="elementSelected.lineHeight" placeholder="0">
-          <Button slot="prepend" icon="md-remove"></Button>
-          <Button slot="append" icon="md-add"></Button>
+          <Button
+            slot="prepend"
+            icon="md-remove"
+            @click="changeFontSize('lineHeight','reduce',0.1,1)"
+          ></Button>
+          <Button
+            slot="append"
+            icon="md-add"
+            @click="changeFontSize('lineHeight','increase',0.1,1)"
+          ></Button>
         </Input>
       </FormItem>
       <FormItem label="FontWeight:" v-show="elementSelected.type=='word'">
@@ -68,15 +91,15 @@
       <FormItem label="Clear:">
         <Button type="warning" style="width: 100%" @click="clearStage" ghost>Stage Clear</Button>
       </FormItem>
+      <FormItem label="Apply:">
+        <Button type="primary" style="width: 100%" @click="applyLayout" ghost>Apply Layout</Button>
+      </FormItem>
       <FormItem label="Display:">
         <Select v-model="selectData">
           <Option value="480P">480P (853*480)</Option>
           <Option value="720P">720P (1280*720)</Option>
           <Option value="1080P">1080P (1920*1080)</Option>
         </Select>
-      </FormItem>
-      <FormItem label="Apply:">
-        <Button style="width: 100%" @click="applyLayout">Apply Layout</Button>
       </FormItem>
       <FormItem label="Export:">
         <i-switch v-model="exportData" size="large">
@@ -125,6 +148,22 @@ export default {
   },
   created() {},
   methods: {
+    changeTextAlign(param) {
+      this.elementSelected.textAlign = param;
+    },
+    changeFontSize(property, op, step, limit) {
+      if (op == "reduce" && this.elementSelected[property] > 1) {
+        this.elementSelected[property] = Number(
+          Number(this.elementSelected[property]) - step
+        ).toFixed(limit);
+      } else if (op == "increase") {
+        this.elementSelected[property] = Number(
+          Number(this.elementSelected[property]) + step
+        ).toFixed(limit);
+      } else {
+        this.$Message.warning("Wrong " + property);
+      }
+    },
     changeLineWeight(status) {
       if (status) {
         this.elementSelected.fontWeight = "bold";
@@ -146,7 +185,9 @@ export default {
       this.exportData = false;
 
       this.$axios
-        .post("https://editor.guangdianyun.tv:3006/clear", { appid: this.appid })
+        .post("https://editor.guangdianyun.tv:3006/clear", {
+          appid: this.appid
+        })
         .then()
         .catch(err => {
           _this.$Message.error("Stage Error");
@@ -225,6 +266,10 @@ export default {
   background: #fff;
   overflow-y: auto;
 
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
   form {
     width: 90%;
     margin-top: 5px;
@@ -239,6 +284,11 @@ export default {
 
     .ivu-form-item {
       margin-bottom: 15px;
+    }
+
+    .ivu-btn-group{
+      float: right;
+      padding-top: 1px;
     }
   }
 }

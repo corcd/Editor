@@ -161,10 +161,11 @@ export default {
       event.preventDefault();
     },
     delElementSelected(ele) {
-      this.element.children.splice(
-        this.element.children.findIndex(item => item.id === ele.id),
-        1
-      );
+      // this.element.children.splice(
+      //   this.element.children.findIndex(item => item.id === ele.id),
+      //   1
+      // );
+      this.$emit("delElementSelected", ele);
     },
     getElementSelected(ele) {
       // 跟随变化
