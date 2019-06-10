@@ -2,9 +2,9 @@
   <div class="inside home">
     <div class="inside-header">
       <div class="inside-header-info">
-        <span class="inside-header-info-main">编辑器</span>
-        <span class="inside-header-info-sub">V 0.9.2</span>
-        <Tag color="#1db5ad">BETA</Tag>
+        <span class="inside-header-info-main">场景编辑器</span>
+        <span class="inside-header-info-sub">V 0.9.7.8</span>
+        <Tag color="error">ALPHA</Tag>
       </div>
       <div class="inside-header-controller">
         <div class="inside-header-save" @click="clearStageTest">
@@ -13,8 +13,8 @@
         <div class="inside-header-save" @click="onceUpdataTest">
           <span>切换测试</span>
         </div>
-        <div class="inside-header-save">
-          <span>保存为新场景</span>
+        <div class="inside-header-save" @click="saveNewData">
+          <span>另存为新场景</span>
         </div>
         <div class="inside-header-save" @click="saveData">
           <span>保存当前场景</span>
@@ -36,16 +36,16 @@
           :before-upload="handleBeforeUpload"
         >
           <div class="inside-sidebar-button">
-            <span>添加图片</span>
+            <span>添加图片元素</span>
           </div>
         </Upload>
         <Poptip placement="bottom">
           <div class="inside-sidebar-button">
-            <span>添加字幕</span>
+            <span>添加字幕元素</span>
           </div>
           <div class="api" slot="content">
             <Input v-model="newText" placeholder="Enter something..." style="width: 150px"/>
-            <Button type="default" class="btn-new-word-confirm" @click="addWord">Add</Button>
+            <Button type="default" class="btn-new-word-confirm" @click="addWord">添加字幕</Button>
           </div>
         </Poptip>
         <div class="inside-sidebar-divider">
@@ -98,10 +98,20 @@
               </div>
               <div class="inside-editor-toolbar-tools-style" v-if="eleSelected.type=='layout'">
                 <span v-show="eleSelected.model!='score'" style="width: 100px !important;">标题:</span>
-                <span v-show="eleSelected.model=='score'" style="width: 100px !important;">比分:</span>
+                <span v-show="eleSelected.model=='score'">比分:</span>
                 <Input
                   v-model="eleSelected.children[1].text"
+                  v-if="eleSelected.model!='score'"
                   placeholder="请输入标题内容..."
+                  style="margin-right: 5px;"
+                  clearable
+                />
+                <InputNumber
+                  :max="999"
+                  :min="0"
+                  v-model="eleSelected.children[1].text"
+                  v-if="eleSelected.model=='score'"
+                  placeholder="请输入比分..."
                   style="margin-right: 5px;"
                   clearable
                 />
@@ -122,10 +132,20 @@
               </div>
               <div class="inside-editor-toolbar-tools-style" v-if="eleSelected.type=='layout'">
                 <span v-show="eleSelected.model!='score'" style="width: 120px !important;">副标题:</span>
-                <span v-show="eleSelected.model=='score'" style="width: 100px !important;">比分:</span>
+                <span v-show="eleSelected.model=='score'">比分:</span>
                 <Input
                   v-model="eleSelected.children[2].text"
+                  v-if="eleSelected.model!='score'"
                   placeholder="请输入副标题内容..."
+                  style="margin-right: 5px;"
+                  clearable
+                />
+                <InputNumber
+                  :max="999"
+                  :min="0"
+                  v-model="eleSelected.children[2].text"
+                  v-if="eleSelected.model=='score'"
+                  placeholder="请输入比分..."
                   style="margin-right: 5px;"
                   clearable
                 />
@@ -141,8 +161,8 @@
               <div class="inside-editor-toolbar-tools-style" v-show="eleSelected.type=='word'">
                 <span>字型:</span>
                 <i-switch size="large" v-model="switchStatus" @on-change="changeFontWeight">
-                  <span slot="open">Bold</span>
-                  <span slot="close">Norm</span>
+                  <span slot="open" style="font-size: 12px;">粗体</span>
+                  <span slot="close" style="font-size: 12px;">普通</span>
                 </i-switch>
               </div>
               <div class="inside-editor-toolbar-tools-style" v-if="eleSelected.type=='word'">
@@ -184,12 +204,14 @@
           <div
             class="dragCanvas canvas"
             v-bind:class="[resolution == '480P' ? 'simpleCanvas':'',resolution == '720P' ? 'normalCanvas':'',resolution == '1080P' ? 'extendCanvas':'',isCanvasColorBlack ? 'blackCanvas':'']"
+            @click="clearElementSelected"
           >
             <ImgElement
               v-for="element in filterOfImg"
               :key="element.id"
               :resolution="resolution"
               :zoom="zoom"
+              :inside="true"
               :element="element"
               :elementSelected="eleSelected"
               @getElementSelected="getElementSelected"
@@ -201,6 +223,7 @@
               :key="element.id"
               :resolution="resolution"
               :zoom="zoom"
+              :inside="true"
               :element="element"
               :elementSelected="eleSelected"
               :marqueeStatus="element.marquee_pattern"
@@ -214,6 +237,7 @@
               :key="element.id"
               :resolution="resolution"
               :zoom="zoom"
+              :inside="true"
               :element="element"
               :elementSelected="eleSelected"
               @getElementSelected="getElementSelected"
@@ -222,6 +246,42 @@
             ></LayoutItem>
           </div>
         </div>
+      </div>
+      <div class="inside-controlbar">
+        <div class="inside-controlbar-divider">
+          <span>历史场景模块</span>
+        </div>
+        <div class="inside-controlbar-divider">
+          <span>场景测试模块</span>
+        </div>
+        <div class="inside-controlbar-layout">
+          <div
+            class="inside-controlbar-layoutpicker"
+            v-for="item in layout"
+            :key="item.id"
+            @click="loadLayout(item.id)"
+          >
+            <span>{{ item.title }}</span>
+            <span>{{ item.id }}</span>
+          </div>
+        </div>
+        <div class="inside-controlbar-divider">
+          <span>图层测试模块</span>
+        </div>
+        <Table
+          :columns="[{
+                        title: '图层',
+                        key: 'type'
+                    },
+                    {
+                        title: '层次',
+                        key: 'index',
+                        sortable: true
+                    }]"
+          :data="elements"
+          no-data-text="无图层"
+          size="small"
+        ></Table>
       </div>
     </div>
   </div>
@@ -235,6 +295,8 @@ export default {
   data() {
     return {
       appid: "",
+      uin: "",
+      dms_token: "",
       eleid: 0,
       timer: null,
       isCanvasColorBlack: false,
@@ -245,6 +307,10 @@ export default {
       zoom: 0.66666666,
       mag: 1,
       data: {},
+      layout: [],
+      layout_id: 0,
+      title: "",
+      poster: "",
       elements: [],
       eleSelected: {},
       lastIndex: 1,
@@ -281,6 +347,11 @@ export default {
     this.$Loading.start();
     // 获取 appid
     this.appid = this.$utils.parseUrl("appid");
+    console.log(this.appid);
+    this.uin = this.$utils.parseUrl("uin");
+    console.log(this.uin);
+    this.dms_token = this.$utils.parseUrl("token");
+    console.log(this.dms_token);
     if (this.appid == "" || this.appid == undefined) {
       this.$Message.error("No user");
       console.log(response.data.msg);
@@ -290,28 +361,115 @@ export default {
         query: { msg: "No user" }
       });
     }
-    let _this = this;
+    if (this.uin == "" || this.uin == undefined) {
+      this.$Message.error("No uin");
+    }
+    // DMS
+    // this.$axios
+    //   .post("http://pub.guangdianyun.tv/v1/message/Index/send", {
+    //     topic: "editor",
+    //     cmd: "online",
+    //     uin: this.uin,
+    //     extra: {
+    //       msg: "test"
+    //     }
+    //   })
+    //   .then(response => {
+    //     if (response.data.code == 200) {
+    //       console.log(response.data.msg);
+    //       self.$Message.success("DMS Success");
+    //       //this.elements = response.data.data.elements;
+    //       //this.lastIndex = response.data.data.lastIndex;
+    //       self.$Loading.finish();
+    //     } else {
+    //       self.$Message.error("DMS Failed");
+    //       self.$Loading.error();
+    //     }
+    //   })
+    //   .catch(function(error) {
+    //     self.$Message.error("DMS Error");
+    //     self.$Loading.error();
+    //   });
+    // ****************
+    let self = this;
     this.$axios
       .post("https://editor.guangdianyun.tv:3006/getData", {
-        appid: _this.appid,
+        appid: self.appid,
         type: "editor"
       })
-      .then(function(response) {
+      .then(response => {
         if (response.data.code == "1") {
-          _this.$Message.success("Init Success");
           console.log(response.data.msg);
-          _this.elements = response.data.data.elements;
-          _this.lastIndex = response.data.data.lastIndex;
-          _this.$Loading.finish();
+          self.layout = response.data.data.layout;
+          console.log(self.layout.length);
+          if (self.layout.length == 0) {
+            self.$nextTick(() => {
+              self.layout.push({
+                id: 1,
+                title: "默认场景",
+                poster: "",
+                elements: [],
+                lastIndex: 1
+              });
+              console.log(self.layout);
+              self.loadLayout(1);
+            });
+            self.$Message.success("Init Success");
+          } else {
+            self.$Message.success("Load Success");
+          }
+          //this.elements = response.data.data.elements;
+          //this.lastIndex = response.data.data.lastIndex;
+          self.$Loading.finish();
         } else if (response.data.code == "0") {
         } else {
-          _this.$Message.error("Init Failed");
-          _this.$Loading.error();
+          self.$Message.error("Init Failed");
+          self.$Loading.error();
         }
       })
       .catch(function(error) {
-        _this.$Message.error("Init Error");
-        _this.$Loading.error();
+        self.$Message.error("Init Error");
+        self.$Loading.error();
+      });
+
+    this.$axios({
+      method: "GET",
+      url: "//consoleapi.guangdianyun.tv/v1/account/person/getDmsKeyInfo",
+      headers: {
+        token: this.dms_token
+      }
+    })
+      .then(response => {
+        if (response.data.code == 200) {
+          console.log(response.data.data);
+          // DMS Init
+          ROP.Leave();
+          let pub_key = response.data.data.pub_key;
+          let sub_key = response.data.data.sub_key;
+          let clientid = "whzwhzwhz";
+          ROP.Enter(pub_key, sub_key, clientid, true);
+          ROP.Subscribe("editor_" + this.uin);
+          // 连接成功
+          ROP.On("enter_suc", function() {
+            console.log("EnterSuc");
+          });
+          // 连接失败
+          ROP.On("enter_fail", function(err) {
+            console.log("EnterFail:" + err);
+          });
+          // 收到消息
+          ROP.On("publish_data", function(data, topic) {
+            console.log("recv at " + topic + " -> " + data);
+          });
+          self.$Loading.finish();
+        } else {
+          self.$Message.error(response.data.errorMessag);
+          self.$Loading.error();
+        }
+      })
+      .catch(function(error) {
+        self.$Message.error("Init Error");
+        self.$Loading.error();
       });
   },
   mounted() {
@@ -344,41 +502,59 @@ export default {
     }
   },
   methods: {
+    loadLayout(id) {
+      this.$nextTick(() => {
+        this.clearElementSelected();
+
+        let layoutArray = this.layout.filter(item => item.id == id);
+        let layoutSelected = JSON.parse(JSON.stringify(layoutArray[0]));
+        this.title = layoutSelected.title;
+        this.poster = layoutSelected.poster;
+        this.elements = layoutSelected.elements;
+        this.lastIndex = layoutSelected.lastIndex;
+        this.layout_id = id;
+        layoutSelected = null;
+      });
+      console.log(this.layout);
+    },
     clearStageTest() {
+      let self = this;
       this.$axios
         .post("https://editor.guangdianyun.tv:3006/clear", {
-          appid: this.appid
+          appid: self.appid
         })
-        .then((response) =>{
+        .then(response => {
           if (response.data.code == "1") {
-            this.$Message.success("Cleared");
-            this.$Loading.finish();
+            self.$Message.success("Cleared");
+            self.$Loading.finish();
           } else {
-            this.$Message.error("Clear Failed");
-            this.$Loading.error();
+            self.$Message.error("Clear Failed");
+            self.$Loading.error();
           }
         })
         .catch(err => {
-          this.$Message.error("Clear Error");
+          self.$Message.error("Clear Error");
         });
     },
     onceUpdataTest() {
+      let self = this;
       this.$axios
         .post("https://editor.guangdianyun.tv:3006/apply", {
-          appid: this.appid,
+          appid: self.appid,
+          uin: self.uin
         })
-        .then((response) =>{
+        .then(response => {
           if (response.data.code == "1") {
-            this.$Message.success("Applied");
-            this.$Loading.finish();
+            self.$Message.success("Applied");
+            self.$Loading.finish();
           } else {
-            this.$Message.error("Apply Failed");
-            this.$Loading.error();
+            self.$Message.error("Apply Failed");
+            self.$Loading.error();
           }
         })
         .catch(function(error) {
-          this.$Message.error("Apply Error");
-          this.$Loading.error();
+          self.$Message.error("Apply Error");
+          self.$Loading.error();
         });
     },
     upqiniu(file) {
@@ -498,27 +674,70 @@ export default {
         index: 0
       };
     },
-    saveData() {
+    saveNewData() {
       this.$Loading.start();
-      let _this = this;
+      this.layout.push({
+        id: this.layout.length + 1,
+        title: "新增场景",
+        poster: "",
+        elements: this.elements,
+        lastIndex: this.lastIndex
+      });
+      let self = this;
       this.$axios
         .post("https://editor.guangdianyun.tv:3006/setData", {
-          appid: _this.appid,
-          data: { elements: _this.elements, lastIndex: _this.lastIndex }
+          appid: self.appid,
+          uin: self.uin,
+          data: { layout: self.layout }
         })
-        .then(function(response) {
+        .then(response => {
           console.log(response);
           if (response.data.code == "1") {
-            _this.$Message.success("Save OK");
-            _this.$Loading.finish();
+            self.$Message.success("Save Success");
+            self.$Loading.finish();
           } else {
-            _this.$Message.error("Save Failed");
-            _this.$Loading.error();
+            self.$Message.error("Save Failed");
+            self.$Loading.error();
           }
         })
         .catch(function(error) {
-          _this.$Message.error("Save Error");
-          _this.$Loading.error();
+          self.$Message.error("Save Error");
+          self.$Loading.error();
+        });
+    },
+    saveData() {
+      this.$Loading.start();
+      this.layout.splice(
+        this.layout.findIndex(item => item.id === this.layout_id),
+        1,
+        {
+          id: this.layout_id,
+          title: this.title,
+          poster: this.poster,
+          elements: this.elements,
+          lastIndex: this.lastIndex
+        }
+      );
+      let self = this;
+      this.$axios
+        .post("https://editor.guangdianyun.tv:3006/setData", {
+          appid: self.appid,
+          uin: self.uin,
+          data: { layout: self.layout }
+        })
+        .then(response => {
+          console.log(response);
+          if (response.data.code == "1") {
+            self.$Message.success("Save Success");
+            self.$Loading.finish();
+          } else {
+            self.$Message.error("Save Failed");
+            self.$Loading.error();
+          }
+        })
+        .catch(function(error) {
+          self.$Message.error("Save Error");
+          self.$Loading.error();
         });
     },
     updateData() {
@@ -559,7 +778,7 @@ export default {
             id: this.lastIndex,
             width: image.width,
             height: image.height,
-            top: 0,
+            top: 50,
             left: 0,
             title: "",
             type: type,
@@ -576,7 +795,7 @@ export default {
         newObj = {
           id: this.lastIndex,
           width: 200,
-          top: 0,
+          top: 50,
           left: 0,
           title: "",
           lineHeight: 1.5,
@@ -601,12 +820,13 @@ export default {
         };
         this.lastIndex++;
         this.elements.push(newObj);
+        this.eleSelected = this.elements[this.elements.length - 1];
       } else if (type == "component") {
         if (param == "default_1") {
           newObj = {
             id: this.lastIndex,
             width: 880,
-            height: 177,
+            height: 150,
             top: 550,
             left: 22,
             title: "",
@@ -635,7 +855,7 @@ export default {
               },
               {
                 id: this.lastIndex + 2,
-                width: 158,
+                width: 550,
                 top: 34,
                 left: 74,
                 title: "",
@@ -661,7 +881,7 @@ export default {
               },
               {
                 id: this.lastIndex + 3,
-                width: 200,
+                width: 550,
                 top: 83,
                 left: 76,
                 title: "",
@@ -691,11 +911,12 @@ export default {
           };
           this.lastIndex = this.lastIndex + 4;
           this.elements.push(newObj);
+          this.eleSelected = this.elements[this.elements.length - 1];
         } else if (param == "default_2") {
           newObj = {
             id: this.lastIndex,
             width: 880,
-            height: 177,
+            height: 150,
             top: 550,
             left: 22,
             title: "",
@@ -724,7 +945,7 @@ export default {
               },
               {
                 id: this.lastIndex + 2,
-                width: 158,
+                width: 750,
                 top: 17,
                 left: 32,
                 title: "",
@@ -750,7 +971,7 @@ export default {
               },
               {
                 id: this.lastIndex + 3,
-                width: 200,
+                width: 265,
                 top: 97,
                 left: 32,
                 title: "",
@@ -780,6 +1001,7 @@ export default {
           };
           this.lastIndex = this.lastIndex + 4;
           this.elements.push(newObj);
+          this.eleSelected = this.elements[this.elements.length - 1];
         } else if (param == "default_3") {
           newObj = {
             id: this.lastIndex,
@@ -813,7 +1035,7 @@ export default {
               },
               {
                 id: this.lastIndex + 2,
-                width: 158,
+                width: 695,
                 top: 49,
                 left: 73,
                 title: "",
@@ -839,7 +1061,7 @@ export default {
               },
               {
                 id: this.lastIndex + 3,
-                width: 200,
+                width: 480,
                 top: -4,
                 left: 76,
                 title: "",
@@ -869,6 +1091,7 @@ export default {
           };
           this.lastIndex = this.lastIndex + 4;
           this.elements.push(newObj);
+          this.eleSelected = this.elements[this.elements.length - 1];
         } else if (param == "default_4") {
           newObj = {
             id: this.lastIndex,
@@ -902,16 +1125,16 @@ export default {
               },
               {
                 id: this.lastIndex + 2,
-                width: 35,
-                top: 56,
-                left: 375,
+                width: 73,
+                top: 61,
+                left: 355,
                 title: "",
                 lineHeight: 1.5,
                 type: "word",
                 text: "1",
                 color: "#FFFFFF",
                 textAlign: "center",
-                fontSize: "46",
+                fontSize: "40",
                 fontWeight: "normal",
                 fontFamily: "Helvetica",
                 alpha: 100,
@@ -928,16 +1151,16 @@ export default {
               },
               {
                 id: this.lastIndex + 3,
-                width: "35",
-                top: 57,
-                left: 469,
+                width: 73,
+                top: 61,
+                left: 448,
                 title: "",
                 lineHeight: 1.5,
                 type: "word",
                 text: "1",
                 color: "#FFFFFF",
                 textAlign: "center",
-                fontSize: "46",
+                fontSize: "40",
                 fontWeight: "normal",
                 fontFamily: "Helvetica",
                 alpha: 100,
@@ -954,9 +1177,9 @@ export default {
               },
               {
                 id: this.lastIndex + 4,
-                width: "145",
+                width: 267,
                 top: 70,
-                left: 120,
+                left: 59,
                 title: "",
                 lineHeight: 1.5,
                 type: "word",
@@ -980,9 +1203,9 @@ export default {
               },
               {
                 id: this.lastIndex + 5,
-                width: 145,
+                width: 267,
                 top: 70,
-                left: 618,
+                left: 554,
                 title: "",
                 lineHeight: 1.5,
                 type: "word",
@@ -1010,6 +1233,7 @@ export default {
           };
           this.lastIndex = this.lastIndex + 6;
           this.elements.push(newObj);
+          this.eleSelected = this.elements[this.elements.length - 1];
         }
       }
     }
@@ -1170,10 +1394,13 @@ export default {
       }
 
       .ivu-upload {
+        height: 35px;
+        margin-bottom: 8px;
+
         .inside-sidebar-button {
           width: 270px;
-          height: 25px;
-          margin-bottom: 8px;
+          height: 35px;
+          //margin-bottom: 8px;
           display: flex;
           justify-content: center;
           align-items: center;
@@ -1189,11 +1416,12 @@ export default {
 
       .ivu-poptip {
         width: 100%;
+        margin: 0;
 
         .ivu-poptip-rel {
           .inside-sidebar-button {
             width: 270px;
-            height: 25px;
+            height: 35px;
             margin-bottom: 8px;
             display: flex;
             justify-content: center;
@@ -1296,6 +1524,42 @@ export default {
 
           .element {
             position: absolute;
+          }
+        }
+      }
+    }
+
+    .inside-controlbar {
+      width: 150px;
+      min-width: 100px;
+      height: 100%;
+      box-shadow: 0 0px 12px #2f353b;
+      background-color: #2f353b;
+      overflow-x: hidden;
+      overflow-y: auto;
+      box-sizing: border-box;
+      z-index: 1;
+
+      .inside-controlbar-divider {
+        width: 100%;
+        height: 30px;
+        font-size: 16px;
+        background-color: #212326;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      .inside-controlbar-layout {
+        width: 100%;
+        height: 200px;
+
+        .inside-controlbar-layoutpicker {
+          width: 100%;
+          height: 40px;
+          display: inline-block;
+
+          span {
+            font-size: 16px;
           }
         }
       }

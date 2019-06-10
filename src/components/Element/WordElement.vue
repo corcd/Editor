@@ -14,6 +14,8 @@
       :element="element"
       :zoom="zoom"
       :objtype="'word'"
+      :inside="inside"
+      @delElementSelected="delElementSelected"
     />
     <section class="content" @dragstart="dragstart">
       <div :class="'animated'+ ' ' + this.element['animation']" :style="styleAnime">
@@ -42,7 +44,11 @@ export default {
       type: Object
     },
     marqueeStatus: { type: String, default: "normal" },
-    marqueeDuration: Number
+    marqueeDuration: Number,
+    inside: {
+      type: Boolean,
+      default: false
+    }
   },
   data() {
     return {

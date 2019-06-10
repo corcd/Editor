@@ -1,5 +1,12 @@
 <template>
-  <div class="operate" :style="{width:element.width+'px',height:element.height+'px'}">
+  <div
+    class="operate"
+    :style="{width:element.width+'px',height:element.height+'px'}"
+    :class="[inside ? 'whiteBorder':'blackBorder']"
+  >
+    <div class="close" @click="delElementSelected">
+      <Icon type="md-close-circle" color="white" size="35"/>
+    </div>
     <div class="scale scale-nw" @mousedown.stop="mousedown($event, 'nw')"></div>
     <div class="scale scale-ne" @mousedown.stop="mousedown($event, 'ne')"></div>
     <div class="scale scale-sw" @mousedown.stop="mousedown($event, 'sw')"></div>
@@ -19,9 +26,16 @@ export default {
     zoom: Number,
     objtype: {
       type: String
+    },
+    inside: {
+      type: Boolean,
+      default: false
     }
   },
   methods: {
+    delElementSelected() {
+      this.$emit("delElementSelected", this.element);
+    },
     mousedown(downEvent, mark) {
       let startX = downEvent.clientX;
       let startY = downEvent.clientY;
@@ -99,13 +113,29 @@ export default {
 };
 </script>
 <style lang="scss" scoped>
+.whiteBorder {
+  border: 1px dashed #fff;
+}
+
+.blackBorder {
+  border: 1px dashed #000;
+}
+
 .operate {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  border: 1px dashed #000;
+  //border: 1px dashed #000;
+
+  .close {
+    position: absolute;
+    top: -40px;
+    left: 50%;
+    margin-left: -17.5px;
+    cursor: pointer;
+  }
 
   .scale {
     position: absolute;

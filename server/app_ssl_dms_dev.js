@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 let express = require("express");
 let app = express();
 let path = require("path");
@@ -14,6 +15,7 @@ let options = {
 // Http & Https
 let http = require("http").Server(app);
 let https = require("https").Server(options, app);
+let request = require("request");
 // Socket.io
 let io = require("socket.io")(https);
 // MongoDB
@@ -104,16 +106,47 @@ app.post("/setData", (req, res, next) => {
   EditorLib.updateOne(
     {
       // eslint-disable-next-line prettier/prettier
-       editor_appid: req.body.appid
+      editor_appid: req.body.appid
     },
     updateObj,
-    function(err) {
+    (err) => {
       if (err) console.log(err);
       console.log("Editor Data Updated");
+      // DMS
+      request(
+        {
+          url: "http://pub.guangdianyun.tv/v1/message/Index/send",
+          method: "POST",
+          json: true,
+          headers: {
+            "content-type": "application/json"
+          },
+          qs: {
+            "topic": "editor",
+            "cmd": "update",
+            "uin": req.body.uin,
+            "extra": {
+              "msg": "test"
+            }
+          }
+        },
+        (error, response, body) => {
+          if (!error && response.body.code == 200) {
+            console.log("DMS Success");
+          } else if (error) {
+            console.log("DMS Error", error);
+          } else {
+            //console.log(uin);
+            console.log("DMS Failed", response.body.code);
+          }
+        }
+      );
+
       res.json({
         code: "1",
         msg: "Save Success"
       });
+
     }
   );
 });
@@ -221,7 +254,7 @@ io.on("connection", socket => {
       UserList.findOne(
         {
           // eslint-disable-next-line prettier/prettier
-            "user_appid": info.appid
+          "user_appid": info.appid
         },
         "user_appid",
         function(err, res) {
@@ -283,6 +316,7 @@ io.on("connection", socket => {
   app.post("/clear", (req, res, next) => {
     console.log(req.body);
     socket.broadcast.to(req.body.appid).emit("clearStage");
+
     console.log("舞台数据清除");
     res.send({
       code: 1
@@ -293,6 +327,35 @@ io.on("connection", socket => {
   app.post("/apply", (req, res, next) => {
     console.log(req.body);
     socket.broadcast.to(req.body.appid).emit("onceUpdate");
+    // DMS
+    request(
+      {
+        url: "http://pub.guangdianyun.tv/v1/message/Index/send",
+        method: "POST",
+        json: true,
+        headers: {
+          "content-type": "application/json"
+        },
+        qs: {
+          "topic": "editor",
+          "cmd": "apply",
+          "uin": req.body.uin,
+          "extra": {
+            "msg": "test"
+          }
+        }
+      },
+      (error, response, body) => {
+        if (!error && response.body.code == 200) {
+          console.log("DMS Success");
+        } else if (error) {
+          console.log("DMS Error", error);
+        } else {
+          console.log("DMS Failed", response.body.code);
+        }
+      }
+    );
+
     console.log("请求编辑器更新舞台数据");
     res.send({
       code: 1

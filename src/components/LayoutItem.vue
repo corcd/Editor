@@ -15,6 +15,7 @@
       :resolution="resolution"
       :zoom="zoom"
       :locked="locked"
+      :inside="inside"
       :element="item"
       :elementSelected="elementSelected"
       @getElementSelected="getElementSelected"
@@ -27,6 +28,7 @@
       :resolution="resolution"
       :zoom="zoom"
       :locked="locked"
+      :inside="inside"
       :element="item"
       :elementSelected="elementSelected"
       :marqueeStatus="item.marquee_pattern"
@@ -40,6 +42,8 @@
       :element="element"
       :zoom="zoom"
       :objtype="'layout'"
+      :inside="inside"
+      @delElementSelected="delElementSelected"
     />
   </div>
 </template>
@@ -56,6 +60,10 @@ export default {
     },
     elementSelected: {
       type: Object
+    },
+    inside: {
+      type: Boolean,
+      default: false
     }
   },
   data() {

@@ -21,6 +21,8 @@
       :element="element"
       :zoom="zoom"
       :objtype="'img'"
+      :inside="inside"
+      @delElementSelected="delElementSelected"
     />
   </div>
 </template>
@@ -41,6 +43,10 @@ export default {
     },
     elementSelected: {
       type: Object
+    },
+    inside: {
+      type: Boolean,
+      default: false
     }
   },
   data() {
