@@ -1,5 +1,5 @@
 <template>
-  <div class="preview">
+  <div class="screenshot">
     <div
       id="canvas"
       class="showCanvas"
@@ -66,29 +66,23 @@
 import "animate.css";
 import "../assets/css/custom.css";
 export default {
-  name: "preview",
+  name: "screenshot",
   components: {},
   data() {
     return {
       appid: "",
       stageResolution: "720P",
       coefficient: 1,
-      elements: [],
-      previewDataBackUp: []
+      layout: [],
+      layout_id: 0,
+      title: "",
+      poster: "",
+      elements: []
     };
-  },
-  sockets: {
-    connect() {
-      console.log("socket connected");
-    },
-    customEmit(val) {
-      console.log(
-        'this method was fired by the socket server. eg: io.emit("customEmit", data)'
-      );
-    }
   },
   created() {
     this.appid = this.$utils.parseUrl("appid");
+    this.layout_id = this.$utils.parseUrl("id");
     if (this.appid == null) {
       this.$Message.error("No user");
       console.log("No user:");
@@ -97,50 +91,59 @@ export default {
         query: { msg: "No user" }
       });
     }
-    console.log("current user:", this.appid);
+    if (this.layout_id == null) {
+      console.log("No layout id");
+      this.$router.push({
+        path: "/error",
+        query: { msg: "No Layout" }
+      });
+    }
+    console.log("layout_id:", this.layout_id);
+
+    // 获取工作区数据
+    let self = this;
+    this.$axios
+      .post("https://editor.guangdianyun.tv:3006/getData", {
+        appid: self.appid,
+        type: "editor"
+      })
+      .then(response => {
+        if (response.data.code == 1) {
+          console.log(response.data.msg);
+          self.layout = response.data.data.layout;
+          console.log("layout data length:", self.layout.length);
+          if (self.layout.length == 0) {
+            //console.log("New User")
+            self.elements = [];
+          } else {
+            self.elements =
+              self.layout[
+                self.layout.findIndex(item => item.id == self.layout_id)
+              ].elements;
+            console.log(self.elements);
+          }
+        } else if (response.data.code == 0) {
+        } else {
+        }
+      })
+      .catch(function(error) {});
   },
-  mounted() {
-    let socketObj = { appid: this.appid, type: "preview" };
-    this.$socket.emit("online", socketObj);
-
-    // this.$socket.on("clearStage", () => {
-    //   this.$nextTick(() => {
-    //     this.elements = [];
-    //     console.log(this.elements);
-    //   });
-    // });
-
-    this.$socket.on("receiveMsgPre", data => {
-      //console.log(data);
-      this.coefficient = data.Mag;
-      this.stageResolution = data.Resolution;
-      // if (data.Resolution == "480P") coefficient = 1;
-      // else if (data.Resolution == "720P") coefficient = 1.5;
-      // else if (data.Resolution == "1080P") coefficient = 1.5 * 1.5;
-      // else coefficient = 1;
-      if (this.previewDataBackUp === data.Objs) {
-      } else {
-        this.previewDataBackUp = data.Objs;
-        this.elements = data.Objs;
-      }
-
-      // this.$nextTick(() => {
-      //   this.elements = data.Objs;
-      // });
-    });
-  },
+  mounted() {},
   beforeDestroy() {
     //this.$socket.close();
   },
   computed: {
     filterOfImg() {
-      return this.elements.filter(item => item.type == "img");
+      if (this.elements)
+        return this.elements.filter(item => item.type == "img");
     },
     filterOfWord() {
-      return this.elements.filter(item => item.type == "word");
+      if (this.elements)
+        return this.elements.filter(item => item.type == "word");
     },
     filterOfLayout() {
-      return this.elements.filter(item => item.type == "layout");
+      if (this.elements)
+        return this.elements.filter(item => item.type == "layout");
     }
   },
   methods: {
@@ -190,14 +193,13 @@ export default {
   height: 1080px;
 }
 
-.preview {
-  background-color: transparent !important;
+.screenshot {
+  background-color: #2f353b !important;
 
   .showCanvas {
     margin: 0;
     padding: 0;
-    background-color: transparent;
-    border: 1px grey solid;
+    background-color: #2f353b;
     position: relative;
     overflow: hidden;
     z-index: 0;

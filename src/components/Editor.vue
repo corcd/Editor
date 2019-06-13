@@ -1,64 +1,13 @@
 <template>
   <div :class="[type!=='see'?'canvas':'']" @click="cleanSelected">
-    <template v-for="element in elements">
-      <div v-if="element.type==='bg'" class="bg-layer" style="background-color: #fff;">
-        <div style="left: -499px; top: 0px; width: 100%; height: 100%; opacity: 1; ">
-          <img :src="http + element.imgSrc" alt style="width: 100%;height: 100%;">
-        </div>
-      </div>
-      <div @click.stop="selectedElement(element)">
-        <ImgElement
-          :fileType="element.type"
-          v-if="element.type==='pic' || element.type==='video'"
-          :class="[element.playing?'animated ' + element.animatedName:'',element.loop?'infinite':'']"
-          :element="element"
-          :style="{transform:'rotate('+element.transform+'deg)','z-index':element.zindex,opacity:element.opacity/100,width:element.width+'px',height:element.height+'px',top:element.top+'px',left:element.left + 'px','animation-duration':element.duration + 's','-webkit-animation-duration':element.duration + 's','animation-delay':element.delay + 's','-webkit-animation-delay':element.delay + 's'}"
-          :showOperate="editorElement == element"
-        ></ImgElement>
-        <!-- <FontElement
-          class="element"
-          v-if="element.type === 'text'"
-          :element="element"
-          :style="elementPosition(element)"
-        ></FontElement>-->
-      </div>
-    </template>
+    
   </div>
 </template>
 
 <script>
 import "animate.css";
 export default {
-  name: "Editor",
-  computed: {
-    elementPosition() {
-      return ele => {
-        return {
-          zIndex: ele["zindex"],
-          top: ele["top"] + "px",
-          left: ele["left"] + "px"
-        };
-      };
-    }
-  },
-  props: {
-    elements: {
-      type: Array
-    },
-    editorElement: {
-      type: Object
-    },
-    type: ""
-  },
-  methods: {
-    selectedElement(element) {
-      this.$store.dispatch("setEditorElement", element);
-    },
-    cleanSelected() {
-      console.log("chean");
-      this.$store.dispatch("setEditorElement", null);
-    }
-  }
+  name: "Editor"
 };
 </script>
 

@@ -2,6 +2,7 @@
   <div
     class="layoutitem"
     v-show="element.visible"
+    draggable="false"
     :style="{'top':element.top+'px','left':element.left+'px','width':element.width+'px','height':element.height+'px','z-index':element.index}"
     :tabindex="element.index"
     @click.stop="showEditor"

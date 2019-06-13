@@ -25,7 +25,7 @@ let moment = require("moment");
 let db = require("./db");
 
 // CORS 跨域
-let allowCors = function(req, res, next) {
+let allowCors = function (req, res, next) {
   res.header("Access-Control-Allow-Origin", req.headers.origin);
   res.header("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,OPTIONS");
   res.header("Access-Control-Allow-Headers", "Content-Type");
@@ -60,6 +60,7 @@ let UserList = mongoose.model("userlist", userSchema);
 let editorSchema = new mongoose.Schema({
   editor_appid: String,
   editor_data: Object,
+  editor_current_layout_id: Number,
   date: String,
   editor_ip: String
 });
@@ -99,12 +100,12 @@ app.post("/setData", (req, res, next) => {
     $set: {
       editor_appid: req.body.appid,
       editor_data: req.body.data,
+      editor_current_layout_id: req.body.current_layout_id,
       date: moment(Date.now()).format("YYYY-MM-DD HH:mm:ss"),
       editor_ip: ""
     }
   };
-  EditorLib.updateOne(
-    {
+  EditorLib.updateOne({
       // eslint-disable-next-line prettier/prettier
       editor_appid: req.body.appid
     },
@@ -113,8 +114,7 @@ app.post("/setData", (req, res, next) => {
       if (err) console.log(err);
       console.log("Editor Data Updated");
       // DMS
-      request(
-        {
+      request({
           url: "http://pub.guangdianyun.tv/v1/message/Index/send",
           method: "POST",
           json: true,
@@ -123,7 +123,7 @@ app.post("/setData", (req, res, next) => {
           },
           qs: {
             "topic": "editor",
-            "cmd": "update",
+            "cmd": req.body.action,
             "uin": req.body.uin,
             "extra": {
               "msg": "test"
@@ -143,7 +143,7 @@ app.post("/setData", (req, res, next) => {
       );
 
       res.json({
-        code: "1",
+        code: 1,
         msg: "Save Success"
       });
 
@@ -155,34 +155,186 @@ app.post("/getData", (req, res, next) => {
   if (req.body.type == "editor") {
     console.log(req.body.appid);
 
-    EditorLib.findOne(
-      {
+    EditorLib.findOne({
         // eslint-disable-next-line prettier/prettier
         "editor_appid": req.body.appid
       },
-      "editor_appid editor_data",
-      function(err, result) {
+      "editor_appid editor_data editor_current_layout_id",
+      function (err, result) {
         if (err) {
           console.log(err);
         } else {
           if (result == null || result.editor_appid != req.body.appid) {
             res.json({
-              code: "0",
+              code: 0,
               msg: "No User"
             });
           } else {
             res.json({
-              code: "1",
+              code: 1,
               data: result.editor_data,
+              extra: result.editor_current_layout_id,
               msg: "Current User"
             });
           }
         }
       }
     );
-  } else if (req.body.type == "stage") {
+  } else if (req.body.type == "stage") {}
+});
+
+app.post("/statusModify", (req, res, next) => {
+  if (req.body.type == "editor" && req.body.id != undefined) {
+    console.log("Director Modify");
+    console.log("Elements id:", req.body.id);
+    // DMS
+    request({
+        url: "http://pub.guangdianyun.tv/v1/message/Index/send",
+        method: "POST",
+        json: true,
+        headers: {
+          "content-type": "application/json"
+        },
+        qs: {
+          "topic": "editor",
+          "cmd": "modify",
+          "uin": req.body.uin,
+          "extra": {
+            "id": req.body.id
+          }
+        }
+      },
+      (error, response, body) => {
+        if (!error && response.body.code == 200) {
+          console.log("DMS Success");
+          res.json({
+            code: 1,
+            msg: "Modify Success"
+          });
+        } else if (error) {
+          console.log("DMS Error", error);
+          res.json({
+            code: -1,
+            msg: "Modify Error"
+          });
+        } else {
+          //console.log(uin);
+          console.log("DMS Failed", response.body.code);
+          res.json({
+            code: 0,
+            msg: "Modify Failed"
+          });
+        }
+      }
+    );
+  } else {
+    res.json({
+      code: 0,
+      msg: "Unexcept Params"
+    });
   }
 });
+
+app.post("/edit", (req, res, next) => {
+  if (req.body.type == "editor" && req.body.id != undefined) {
+    console.log("Director Edit Order");
+    console.log("Elements id:", req.body.id);
+    // DMS
+    request({
+        url: "http://pub.guangdianyun.tv/v1/message/Index/send",
+        method: "POST",
+        json: true,
+        headers: {
+          "content-type": "application/json"
+        },
+        qs: {
+          "topic": "editor",
+          "cmd": "edit",
+          "uin": req.body.uin,
+          "extra": {
+            "id": req.body.id
+          }
+        }
+      },
+      (error, response, body) => {
+        if (!error && response.body.code == 200) {
+          console.log("DMS Success");
+          res.json({
+            code: 1,
+            msg: "Edit Order Success"
+          });
+        } else if (error) {
+          console.log("DMS Error", error);
+          res.json({
+            code: -1,
+            msg: "Edit Order Error"
+          });
+        } else {
+          //console.log(uin);
+          console.log("DMS Failed", response.body.code);
+          res.json({
+            code: 0,
+            msg: "Edit Order Failed"
+          });
+        }
+      }
+    );
+  } else {
+    res.json({
+      code: 0,
+      msg: "Unexcept Params"
+    });
+  }
+});
+
+app.post("/add", (req, res, next) => {
+  if (req.body.type == "editor") {
+    console.log("Director Add Order");
+    // DMS
+    request({
+        url: "http://pub.guangdianyun.tv/v1/message/Index/send",
+        method: "POST",
+        json: true,
+        headers: {
+          "content-type": "application/json"
+        },
+        qs: {
+          "topic": "editor",
+          "cmd": "add",
+          "uin": req.body.uin
+        }
+      },
+      (error, response, body) => {
+        if (!error && response.body.code == 200) {
+          console.log("DMS Success");
+          res.json({
+            code: 1,
+            msg: "Add Order Success"
+          });
+        } else if (error) {
+          console.log("DMS Error", error);
+          res.json({
+            code: -1,
+            msg: "Add Order Error"
+          });
+        } else {
+          //console.log(uin);
+          console.log("DMS Failed", response.body.code);
+          res.json({
+            code: 0,
+            msg: "Add Order Failed"
+          });
+        }
+      }
+    );
+  } else {
+    res.json({
+      code: 0,
+      msg: "Unexcept Params"
+    });
+  }
+});
+
 
 //客户端连接
 io.on("connection", socket => {
@@ -238,6 +390,7 @@ io.on("connection", socket => {
         editor_data: {
           layout: []
         },
+        editor_current_layout_id: null,
         date: moment(Date.now()).format("YYYY-MM-DD HH:mm:ss"),
         editor_ip: ""
       });
@@ -251,13 +404,12 @@ io.on("connection", socket => {
         }
       };
 
-      UserList.findOne(
-        {
+      UserList.findOne({
           // eslint-disable-next-line prettier/prettier
           "user_appid": info.appid
         },
         "user_appid",
-        function(err, res) {
+        function (err, res) {
           if (err) {
             console.log(err);
           } else {
@@ -286,12 +438,11 @@ io.on("connection", socket => {
                 }
               });
             } else {
-              UserList.updateOne(
-                {
+              UserList.updateOne({
                   user_appid: info.appid
                 },
                 updateObj,
-                function(err) {
+                function (err) {
                   if (err) console.log(err);
                   console.log("User Updated");
                 }
@@ -328,8 +479,7 @@ io.on("connection", socket => {
     console.log(req.body);
     socket.broadcast.to(req.body.appid).emit("onceUpdate");
     // DMS
-    request(
-      {
+    request({
         url: "http://pub.guangdianyun.tv/v1/message/Index/send",
         method: "POST",
         json: true,
@@ -341,7 +491,7 @@ io.on("connection", socket => {
           "cmd": "apply",
           "uin": req.body.uin,
           "extra": {
-            "msg": "test"
+            "id": req.body.layout_id
           }
         }
       },

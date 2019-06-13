@@ -2,6 +2,7 @@
   <aside
     class="wrap"
     v-show="element.visible"
+    draggable="false"
     :style="{'top':element.top+'px','left':element.left+'px','z-index':element.index}"
     :tabindex="element.index"
     @click="showEditor"
@@ -17,7 +18,7 @@
       :inside="inside"
       @delElementSelected="delElementSelected"
     />
-    <section class="content" @dragstart="dragstart">
+    <section class="content">
       <div :class="'animated'+ ' ' + this.element['animation']" :style="styleAnime">
         <div v-show="element.type=='word'" :style="styleBasic(element)">{{ element.text }}</div>
       </div>

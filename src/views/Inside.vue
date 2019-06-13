@@ -2,27 +2,47 @@
   <div class="inside home">
     <div class="inside-header">
       <div class="inside-header-info">
-        <span class="inside-header-info-main">场景编辑器</span>
-        <span class="inside-header-info-sub">V 0.9.7.8</span>
+        <span v-show="!isTitleEdit" class="inside-header-info-main">{{ title }}</span>
+        <Input v-show="isTitleEdit" class="inside-header-info-input" v-model="title"/>
+        <Icon
+          v-show="!isTitleEdit"
+          class="inside-header-info-icon"
+          type="md-settings"
+          size="20"
+          @click="changeTitleEditStatus"
+        />
+        <Icon
+          v-show="isTitleEdit"
+          class="inside-header-info-icon"
+          type="md-checkmark-circle"
+          size="20"
+          @click="changeTitleEditStatus"
+        />
         <Tag color="error">ALPHA</Tag>
       </div>
       <div class="inside-header-controller">
+        <div class="inside-header-save" @click="selectToggleTest(layout_id)">
+          <span>选中切换测试</span>
+        </div>
         <div class="inside-header-save" @click="clearStageTest">
           <span>清除测试</span>
         </div>
         <div class="inside-header-save" @click="onceUpdataTest">
           <span>切换测试</span>
         </div>
+        <div class="inside-header-save" @click="delData">
+          <span>删除场景</span>
+        </div>
         <div class="inside-header-save" @click="saveNewData">
           <span>另存为新场景</span>
         </div>
-        <div class="inside-header-save" @click="saveData">
+        <div class="inside-header-save" @click="saveData('update')">
           <span>保存当前场景</span>
         </div>
       </div>
     </div>
     <div class="inside-content">
-      <div class="inside-sidebar">
+      <div class="inside-sidebar" v-show="layout_id != 0">
         <div class="inside-sidebar-divider">
           <span>添加元素</span>
         </div>
@@ -79,7 +99,7 @@
           @addElement="addElement"
         ></ComponentPicker>
       </div>
-      <div class="inside-editor">
+      <div class="inside-editor" v-show="layout_id != 0">
         <div class="inside-editor-toolbar">
           <div class="inside-editor-toolbar-tools">
             <div class="inside-editor-toolbar-tools-content">
@@ -152,24 +172,31 @@
                 <ColorPicker v-model="eleSelected.children[2].color" recommend></ColorPicker>
               </div>
 
-              <div class="inside-editor-toolbar-tools-style" v-show="eleSelected.type=='word'">
-                <span>字体:</span>
-                <Select v-model="eleSelected.fontFamily" style="width: 90px;">
-                  <Option v-for="item in fontFamily" :key="item" :label="item" :value="item"></Option>
-                </Select>
-              </div>
-              <div class="inside-editor-toolbar-tools-style" v-show="eleSelected.type=='word'">
-                <span>字型:</span>
-                <i-switch size="large" v-model="switchStatus" @on-change="changeFontWeight">
-                  <span slot="open" style="font-size: 12px;">粗体</span>
-                  <span slot="close" style="font-size: 12px;">普通</span>
-                </i-switch>
-              </div>
               <div class="inside-editor-toolbar-tools-style" v-if="eleSelected.type=='word'">
-                <span>颜色:</span>
+                <span style="width: 100px !important;">内容:</span>
+                <Input
+                  v-model="eleSelected.text"
+                  placeholder="请输入内容..."
+                  style="margin-right: 5px;"
+                  clearable
+                />
                 <ColorPicker v-model="eleSelected.color" recommend></ColorPicker>
               </div>
               <div class="inside-editor-toolbar-tools-style" v-show="eleSelected.type=='word'">
+                <span>字体:</span>
+                <Select v-model="eleSelected.fontFamily" style="width: 90px; margin-right: 5px;">
+                  <Option v-for="item in fontFamily" :key="item" :label="item" :value="item"></Option>
+                </Select>
+                <i-switch v-model="switchStatus" @on-change="changeFontWeight">
+                  <span slot="open" style="width: 40px !important; font-size: 12px;">粗</span>
+                  <span slot="close" style="width: 40px !important; font-size: 12px;">常</span>
+                </i-switch>
+              </div>
+              <div
+                class="inside-editor-toolbar-tools-style"
+                v-if="false"
+                v-show="eleSelected.type=='word'"
+              >
                 <ButtonGroup class="textAlignControl">
                   <Button
                     :disabled="eleSelected.textAlign == 'left'"
@@ -205,6 +232,9 @@
             class="dragCanvas canvas"
             v-bind:class="[resolution == '480P' ? 'simpleCanvas':'',resolution == '720P' ? 'normalCanvas':'',resolution == '1080P' ? 'extendCanvas':'',isCanvasColorBlack ? 'blackCanvas':'']"
             @click="clearElementSelected"
+            @dragenter="dragenter($event)"
+            @dragover="dragover($event)"
+            @drop="drop($event)"
           >
             <ImgElement
               v-for="element in filterOfImg"
@@ -255,14 +285,9 @@
           <span>场景测试模块</span>
         </div>
         <div class="inside-controlbar-layout">
-          <div
-            class="inside-controlbar-layoutpicker"
-            v-for="item in layout"
-            :key="item.id"
-            @click="loadLayout(item.id)"
-          >
+          <div class="inside-controlbar-layoutpicker" v-for="item in layout" :key="item.id">
             <span>{{ item.title }}</span>
-            <span>{{ item.id }}</span>
+            <span>(ID:{{ item.id }})</span>
           </div>
         </div>
         <div class="inside-controlbar-divider">
@@ -298,16 +323,19 @@ export default {
       uin: "",
       dms_token: "",
       eleid: 0,
+      update_timer: null,
       timer: null,
       isCanvasColorBlack: false,
       isCollapsed: false,
       isExportable: false,
+      isTitleEdit: false,
       selectData: "720P",
       resolution: "720P",
       zoom: 0.66666666,
       mag: 1,
       data: {},
       layout: [],
+      current_layout_id: null,
       layout_id: 0,
       title: "",
       poster: "",
@@ -348,10 +376,13 @@ export default {
     // 获取 appid
     this.appid = this.$utils.parseUrl("appid");
     console.log(this.appid);
+    // 获取 uin
     this.uin = this.$utils.parseUrl("uin");
     console.log(this.uin);
+    // 获取 token
     this.dms_token = this.$utils.parseUrl("token");
     console.log(this.dms_token);
+
     if (this.appid == "" || this.appid == undefined) {
       this.$Message.error("No user");
       console.log(response.data.msg);
@@ -364,33 +395,7 @@ export default {
     if (this.uin == "" || this.uin == undefined) {
       this.$Message.error("No uin");
     }
-    // DMS
-    // this.$axios
-    //   .post("http://pub.guangdianyun.tv/v1/message/Index/send", {
-    //     topic: "editor",
-    //     cmd: "online",
-    //     uin: this.uin,
-    //     extra: {
-    //       msg: "test"
-    //     }
-    //   })
-    //   .then(response => {
-    //     if (response.data.code == 200) {
-    //       console.log(response.data.msg);
-    //       self.$Message.success("DMS Success");
-    //       //this.elements = response.data.data.elements;
-    //       //this.lastIndex = response.data.data.lastIndex;
-    //       self.$Loading.finish();
-    //     } else {
-    //       self.$Message.error("DMS Failed");
-    //       self.$Loading.error();
-    //     }
-    //   })
-    //   .catch(function(error) {
-    //     self.$Message.error("DMS Error");
-    //     self.$Loading.error();
-    //   });
-    // ****************
+    // 获取工作区数据
     let self = this;
     this.$axios
       .post("https://editor.guangdianyun.tv:3006/getData", {
@@ -398,22 +403,14 @@ export default {
         type: "editor"
       })
       .then(response => {
-        if (response.data.code == "1") {
-          console.log(response.data.msg);
+        if (response.data.code == 1) {
+          console.log(response.data);
           self.layout = response.data.data.layout;
-          console.log(self.layout.length);
+          self.current_layout_id = response.data.extra;
+          console.log("current_layout_id", self.current_layout_id);
+          console.log("layout data length:", self.layout.length);
           if (self.layout.length == 0) {
-            self.$nextTick(() => {
-              self.layout.push({
-                id: 1,
-                title: "默认场景",
-                poster: "",
-                elements: [],
-                lastIndex: 1
-              });
-              console.log(self.layout);
-              self.loadLayout(1);
-            });
+            //console.log("New User")
             self.$Message.success("Init Success");
           } else {
             self.$Message.success("Load Success");
@@ -421,7 +418,7 @@ export default {
           //this.elements = response.data.data.elements;
           //this.lastIndex = response.data.data.lastIndex;
           self.$Loading.finish();
-        } else if (response.data.code == "0") {
+        } else if (response.data.code == 0) {
         } else {
           self.$Message.error("Init Failed");
           self.$Loading.error();
@@ -431,7 +428,7 @@ export default {
         self.$Message.error("Init Error");
         self.$Loading.error();
       });
-
+    // DMS
     this.$axios({
       method: "GET",
       url: "//consoleapi.guangdianyun.tv/v1/account/person/getDmsKeyInfo",
@@ -446,7 +443,8 @@ export default {
           ROP.Leave();
           let pub_key = response.data.data.pub_key;
           let sub_key = response.data.data.sub_key;
-          let clientid = "whzwhzwhz";
+          let clientid =
+            "editor" + Date.parse(new Date()) + "" + Math.random() * 999;
           ROP.Enter(pub_key, sub_key, clientid, true);
           ROP.Subscribe("editor_" + this.uin);
           // 连接成功
@@ -457,18 +455,80 @@ export default {
           ROP.On("enter_fail", function(err) {
             console.log("EnterFail:" + err);
           });
+          // 重连
+          ROP.On("offline", function(err) {
+            console.log("offline:" + err);
+          });
+          // 离线
+          ROP.On("reconnect", function() {
+            console.log("reconnect:");
+          });
+          // 被相同ID挤掉线。
+          ROP.On("connectold", function() {
+            console.log("Another One");
+          });
+          // 与服务器断开连接的事件
+          ROP.On("losed", function() {
+            console.log("Losed");
+          });
           // 收到消息
           ROP.On("publish_data", function(data, topic) {
             console.log("recv at " + topic + " -> " + data);
+            let dataObj = JSON.parse(data);
+            if (dataObj.cmd == "add") {
+              try {
+                // 新建场景
+                self.$nextTick(() => {
+                  if (self.layout.length == 0) {
+                    console.log("empty layout");
+                    console.log(self.layout);
+                    self.newLayout(1);
+                    console.log(self.layout);
+                  } else {
+                    console.log("not empty layout");
+                    let new_id = self.layout[self.layout.length - 1].id + 1;
+                    console.log(self.layout);
+                    self.newLayout(new_id);
+                    console.log(self.layout);
+                  }
+                  self.saveData("update");
+                });
+              } catch (error) {
+                console.log(error);
+              }
+            } else if (dataObj.cmd == "edit") {
+              // 编辑已有场景
+              try {
+                //self.layout_id = dataObj.extra.id;
+                self.loadLayout(dataObj.id);
+              } catch (error) {
+                console.log(error);
+              }
+            } else if (dataObj.cmd == "modify") {
+              // 编辑已有场景
+              try {
+                self.selectToggleTest(dataObj.id);
+                //self.layout_id = dataObj.extra.id;
+                //self.loadLayout(dataObj.id);
+                //self.current_layout;
+                //self.onceUpdataTest();
+              } catch (error) {
+                console.log(error);
+              }
+            } else if (dataObj.cmd == "update") {
+            } else {
+              // 防错处理
+              console.log("DMS Params Error");
+            }
           });
           self.$Loading.finish();
         } else {
-          self.$Message.error(response.data.errorMessag);
+          self.$Message.error("DMS Load Failed", response.data.errorMessag);
           self.$Loading.error();
         }
       })
       .catch(function(error) {
-        self.$Message.error("Init Error");
+        self.$Message.error("DMS Load Error");
         self.$Loading.error();
       });
   },
@@ -480,31 +540,81 @@ export default {
       this.updateDataOnce();
     });
 
-    this.$watch("elements", this.updateData, { deep: true });
+    // this.$watch("elements", this.updateData, { immediate: true, deep: true });
+    clearInterval(this.update_timer);
+    this.update_timer = null;
+    console.log("Update timer load");
+    this.update_timer = setInterval(() => {
+      this.updateData();
+      //console.log("Update timer");
+    }, 100);
 
     // auto-keep
     // this.timer = setInterval(() => {
     //   this.exportJSON("auto save");
     // }, 120000);
   },
+  beforeDestroy() {
+    ROP.Leave();
+    clearInterval(this.update_timer);
+    this.update_timer = null;
+  },
   computed: {
     menuitemClasses: () => {
       return ["menu-item", this.isCollapsed ? "collapsed-menu" : ""];
     },
     filterOfImg() {
-      return this.elements.filter(item => item.type == "img");
+      if (this.elements)
+        return this.elements.filter(item => item.type == "img");
     },
     filterOfWord() {
-      return this.elements.filter(item => item.type == "word");
+      if (this.elements)
+        return this.elements.filter(item => item.type == "word");
     },
     filterOfLayout() {
-      return this.elements.filter(item => item.type == "layout");
+      if (this.elements)
+        return this.elements.filter(item => item.type == "layout");
     }
   },
   methods: {
+    drop(event) {
+      let type = event.dataTransfer.getData("Type");
+      if (type != "") {
+        this.addElement(type, "component");
+      } else {
+        self.$Message.error("Drag Error");
+      }
+    },
+    dragover(event) {
+      event.preventDefault();
+    },
+    dragenter(event) {
+      event.preventDefault();
+    },
+    changeTitleEditStatus() {
+      this.isTitleEdit = !this.isTitleEdit;
+    },
+    newLayout(id) {
+      this.clearElementSelected();
+
+      this.layout.push({
+        id: id,
+        title: "新建场景",
+        poster: "",
+        elements: [],
+        lastIndex: 1
+      });
+      this.title = this.layout[this.layout.length - 1].title;
+      this.poster = this.layout[this.layout.length - 1].poster;
+      this.elements = this.layout[this.layout.length - 1].elements;
+      this.lastIndex = this.layout[this.layout.length - 1].lastIndex;
+      this.layout_id = id;
+    },
     loadLayout(id) {
       this.$nextTick(() => {
         this.clearElementSelected();
+
+        id = Number(parseInt(id));
 
         let layoutArray = this.layout.filter(item => item.id == id);
         let layoutSelected = JSON.parse(JSON.stringify(layoutArray[0]));
@@ -517,6 +627,12 @@ export default {
       });
       console.log(this.layout);
     },
+    selectToggleTest(id) {
+      id = Number(parseInt(id));
+
+      this.current_layout_id = id;
+      this.saveData("toggle");
+    },
     clearStageTest() {
       let self = this;
       this.$axios
@@ -524,7 +640,7 @@ export default {
           appid: self.appid
         })
         .then(response => {
-          if (response.data.code == "1") {
+          if (response.data.code == 1) {
             self.$Message.success("Cleared");
             self.$Loading.finish();
           } else {
@@ -541,10 +657,11 @@ export default {
       this.$axios
         .post("https://editor.guangdianyun.tv:3006/apply", {
           appid: self.appid,
-          uin: self.uin
+          uin: self.uin,
+          layout_id: self.layout_id
         })
         .then(response => {
-          if (response.data.code == "1") {
+          if (response.data.code == 1) {
             self.$Message.success("Applied");
             self.$Loading.finish();
           } else {
@@ -625,7 +742,10 @@ export default {
       return false; // 阻止Upload的默认上传
     },
     addWord() {
-      if (this.newText) this.addElement(this.newText, "word");
+      if (this.newText != "") {
+        this.addElement(this.newText, "word");
+        this.newText = "";
+      }
     },
     changeTextAlign(param) {
       this.eleSelected.textAlign = param;
@@ -674,10 +794,22 @@ export default {
         index: 0
       };
     },
+    delData() {
+      if (this.layout == []) {
+        return false;
+      }
+      this.isTitleEdit = false;
+      this.clearElementSelected();
+      this.saveData("del");
+
+      this.layout_id = 0;
+      this.elements = [];
+    },
     saveNewData() {
       this.$Loading.start();
+      this.isTitleEdit = false;
       this.layout.push({
-        id: this.layout.length + 1,
+        id: this.layout[this.layout.length - 1].id + 1,
         title: "新增场景",
         poster: "",
         elements: this.elements,
@@ -688,11 +820,13 @@ export default {
         .post("https://editor.guangdianyun.tv:3006/setData", {
           appid: self.appid,
           uin: self.uin,
-          data: { layout: self.layout }
+          action: "update",
+          data: { layout: self.layout },
+          current_layout_id: self.current_layout_id
         })
         .then(response => {
           console.log(response);
-          if (response.data.code == "1") {
+          if (response.data.code == 1) {
             self.$Message.success("Save Success");
             self.$Loading.finish();
           } else {
@@ -705,29 +839,55 @@ export default {
           self.$Loading.error();
         });
     },
-    saveData() {
+    saveData(action) {
       this.$Loading.start();
-      this.layout.splice(
-        this.layout.findIndex(item => item.id === this.layout_id),
-        1,
-        {
-          id: this.layout_id,
-          title: this.title,
-          poster: this.poster,
-          elements: this.elements,
-          lastIndex: this.lastIndex
+      this.isTitleEdit = false;
+      console.log(this.layout_id);
+      // 加载失败时阻止提交
+      if (this.layout == []) {
+        this.$Loading.error();
+        return false;
+      }
+
+      if (action == "update") {
+        this.layout.splice(
+          this.layout.findIndex(item => item.id == this.layout_id),
+          1,
+          {
+            id: this.layout_id,
+            title: this.title,
+            poster: this.poster,
+            elements: this.elements,
+            lastIndex: this.lastIndex
+          }
+        );
+      } else if (action == "del") {
+        if (this.layout_id == this.current_layout_id) {
+          this.$Loading.error("Layout Is Using");
+          return false;
+        } else {
+          this.layout.splice(
+            this.layout.findIndex(item => item.id == this.layout_id),
+            1
+          );
         }
-      );
+      } else if (action == "toggle") {
+      } else {
+        this.$Loading.error("Update Action Error");
+      }
+
       let self = this;
       this.$axios
         .post("https://editor.guangdianyun.tv:3006/setData", {
           appid: self.appid,
           uin: self.uin,
-          data: { layout: self.layout }
+          action: action,
+          data: { layout: self.layout },
+          current_layout_id: self.current_layout_id
         })
         .then(response => {
           console.log(response);
-          if (response.data.code == "1") {
+          if (response.data.code == 1) {
             self.$Message.success("Save Success");
             self.$Loading.finish();
           } else {
@@ -742,31 +902,50 @@ export default {
     },
     updateData() {
       // 输出至 Preview
-      let socketData = {
-        Resolution: this.resolution,
-        Mag: this.mag,
-        Objs: this.elements
-      };
-      this.$socket.emit("sendMsgPre", {
-        appid: this.appid,
-        data: socketData
-      });
+      if (this.current_layout_id) {
+        let socketData;
+
+        if (this.current_layout_id == this.layout_id) {
+          socketData = {
+            Resolution: this.resolution,
+            Mag: this.mag,
+            Objs: this.elements
+          };
+        } else {
+          socketData = {
+            Resolution: this.resolution,
+            Mag: this.mag,
+            Objs: this.layout[
+              this.layout.findIndex(item => item.id == this.current_layout_id)
+            ].elements
+          };
+        }
+
+        this.$socket.emit("sendMsgPre", {
+          appid: this.appid,
+          data: socketData
+        });
+      }
     },
     updateDataOnce() {
       // 输出至 Stage & Preview
-      let socketData = {
-        Resolution: this.resolution,
-        Mag: this.mag,
-        Objs: this.elements
-      };
-      this.$socket.emit("sendMsgPre", {
-        appid: this.appid,
-        data: socketData
-      });
-      this.$socket.emit("sendMsg", {
-        appid: this.appid,
-        data: socketData
-      });
+      if (this.current_layout_id) {
+        let socketData = {
+          Resolution: this.resolution,
+          Mag: this.mag,
+          Objs: this.layout[
+            this.layout.findIndex(item => item.id == this.current_layout_id)
+          ].elements
+        };
+        this.$socket.emit("sendMsgPre", {
+          appid: this.appid,
+          data: socketData
+        });
+        this.$socket.emit("sendMsg", {
+          appid: this.appid,
+          data: socketData
+        });
+      }
     },
     addElement(param, type) {
       let newObj = {};
@@ -1317,21 +1496,26 @@ export default {
       align-items: flex-end;
 
       .inside-header-info-main {
-        margin-right: 15px;
+        margin-right: 8px;
         font-size: 28px;
       }
 
-      .inside-header-info-sub {
+      .inside-header-info-input {
+        width: 200px;
         margin-right: 10px;
-        margin-bottom: 2px;
-        font-size: 14px;
-        color: #1db5ad;
+        margin-bottom: 5px;
+      }
+
+      .inside-header-info-icon {
+        margin-right: 10px;
+        margin-bottom: 5px;
+        cursor: pointer;
       }
 
       .ivu-tag {
         width: 40px;
         height: 15px;
-        margin-bottom: 5px;
+        margin-bottom: 7px;
         display: flex;
         justify-content: center;
         align-items: center;

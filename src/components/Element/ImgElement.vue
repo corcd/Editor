@@ -2,6 +2,7 @@
   <div
     class="wrap"
     v-show="element.visible"
+    draggable="false"
     :style="{'top':element.top+'px','left':element.left+'px','z-index':element.index}"
     :tabindex="element.index"
     @click="showEditor"
@@ -11,7 +12,7 @@
   >
     <img
       v-if="element.type==='img'"
-      @dragstart="dragstart"
+      draggable="false"
       :src="element.imgSrc"
       :style="{'width':element.width+'px','height':element.height+'px','opacity':(element.alpha/100.0)}"
     >

@@ -1,6 +1,11 @@
 <template>
-  <div class="componentpicker" @click.stop="addComponent">
-    <img alt="component" :src="imgSrc">
+  <div
+    class="componentpicker"
+    draggable="true"
+    @dragstart="dragstart($event)"
+    @click.stop="addComponent"
+  >
+    <img alt="component" :src="imgSrc" draggable="false">
     <div class="componentpicker-controller">
       <span>{{ title }}</span>
     </div>
@@ -16,6 +21,11 @@ export default {
     type: String
   },
   methods: {
+    dragstart(event) {
+      // 存储拖拽数据和拖拽效果...
+      event.dataTransfer.setData("Type", this.type);
+      console.log(event.target);
+    },
     addComponent() {
       this.$emit("addElement", this.type, "component");
     }

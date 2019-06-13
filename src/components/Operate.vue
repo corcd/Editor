@@ -131,7 +131,7 @@ export default {
 
   .close {
     position: absolute;
-    top: -40px;
+    top: -45px;
     left: 50%;
     margin-left: -17.5px;
     cursor: pointer;

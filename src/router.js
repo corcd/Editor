@@ -3,6 +3,7 @@ import Router from "vue-router";
 import Home from "./views/Home.vue";
 import Stage from "./views/Stage.vue";
 import Preview from "./views/Preview.vue";
+import ScreenShot from "./views/ScreenShot.vue";
 import Error from "./views/Error.vue";
 import Mini from "./views/Mini.vue";
 import Inside from "./views/Inside.vue";
@@ -35,6 +36,14 @@ export default new Router({
       component: Preview,
       meta: {
         title: "Preview"
+      }
+    },
+    {
+      path: "/screenshot",
+      name: "screenshot",
+      component: ScreenShot,
+      meta: {
+        title: "Screenshot"
       }
     },
     {
